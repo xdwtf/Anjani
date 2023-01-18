@@ -3,11 +3,7 @@
 
 name: Build Test
 
-on:
-  push:
-    branches: ["staging", "master"]
-  pull_request:
-    branches: ["staging", "master"]
+on: workflow_dispatch
 
 jobs:
   ci:
