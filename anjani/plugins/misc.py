@@ -189,7 +189,7 @@ class Misc(plugin.Plugin):
         chat = ctx.msg.chat
         ud = f'http://api.urbandictionary.com/v0/define?term={tex}'
         res = requests.get(ud)
-        ret = json.loads(response.text)
+        ret = json.loads(res.text)
         try:
             word = ret["list"][0]["word"]
             definition = ret["list"][0]["definition"]
