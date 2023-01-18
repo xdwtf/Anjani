@@ -25,6 +25,7 @@ pyrofork @ git+https://github.com/Mayuri-Chan/pyrofork.git@master ; python_versi
 pysocks==1.7.1 ; python_version >= "3.9" and python_full_version <= "3.11.0"
 python-dotenv==0.21.0 ; python_version >= "3.9" and python_full_version <= "3.11.0"
 pyyaml==6.0 ; python_version >= "3.9" and python_full_version <= "3.11.0"
+requests
 scikit-learn==1.2.0 ; python_version >= "3.9" and python_full_version <= "3.11.0"
 scipy==1.9.3 ; python_version >= "3.9" and python_full_version <= "3.11.0"
 sniffio==1.3.0 ; python_version >= "3.9" and python_full_version <= "3.11.0"
