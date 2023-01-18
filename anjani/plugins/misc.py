@@ -23,8 +23,6 @@ from aiopath import AsyncPath
 from anjani import command, filters, listener, plugin
 from pyrogram.types import Message
 
-import subprocess
-subprocess.call(['pip', 'install', 'requests'])
 import re, json, random, requests
 
 class Paste:
@@ -184,6 +182,26 @@ class Misc(plugin.Plugin):
             caption=text,
         )
         return None
+
+    async def cmd_ud(self, ctx: command.Context) -> Optional[str]:
+        """urban dictionary"""
+        tex = ctx.input.split()[-1]
+        chat = ctx.msg.chat
+        ud = f'http://api.urbandictionary.com/v0/define?term={tex}'
+        res = requests.get(ud)
+        ret = json.loads(response.text)
+        try:
+            word = ret["list"][0]["word"]
+            definition = ret["list"][0]["definition"]
+            example = ret["list"][0]["example"]
+            y = f"Text: {word}\n\nMeaning: {definition}\n\nExample: {example}"
+            await self.bot.client.send_message(
+            chat.id,
+            text=y,
+            reply_to_message_id=ctx.msg.id,
+        )
+        except Exception as e:
+            return None
 
     @listener.priority(95)
     @listener.filters(filters.regex(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/") & filters.group & ~filters.outgoing)
