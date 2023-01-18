@@ -43,6 +43,7 @@ pymongo = "^4.3.3"
 pyrofork = { git = "https://github.com/Mayuri-Chan/pyrofork.git", branch = "master"}
 python-dotenv = "^0.21.0"
 PyYAML = "^6.0"
+requests = "^2.28.2"
 scikit-learn = {version = "1.2.0", optional = true}
 TgCrypto = "^1.2.5"
 typing-extensions = "^4.4.0"
