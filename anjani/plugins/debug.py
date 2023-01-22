@@ -26,7 +26,7 @@ from typing import Any, ClassVar, Optional, Tuple
 
 import pyrogram
 from meval import meval
-from pyrogram.enums.chat_action import ChatAction
+from pyrogram.enums import ChatAction, ParseMode
 
 from anjani import command, filters, plugin, util
 
