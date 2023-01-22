@@ -42,6 +42,21 @@ class Debug(plugin.Plugin):
 
         return f"Latency: {latency} ms"
 
+    async def cmd_json(self, ctx: command.Context) -> str:
+        resp = ctx.msg.reply_to_message or ctx.msg
+        
+        if len(resp) > 4096:
+            async with ctx.action(ChatAction.UPLOAD_DOCUMENT):
+                with io.BytesIO(str.encode(str(resp))) as out_file:
+                    out_file.name = "output.json"
+                    await ctx.msg.reply_document(
+                        document=out_file, caption="Json output", disable_notification=True
+                    )
+        else:
+            await ctx.msg.reply(f"<code>{resp}</code>", quote=True, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
+        return resp
+
     @command.filters(filters.dev_only)
     async def cmd_eval(self, ctx: command.Context) -> Optional[str]:
         code = ctx.input
