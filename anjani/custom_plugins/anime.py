@@ -277,16 +277,14 @@ class Anime(plugin.Plugin):
         while True:
             try:
                 await query.message.edit_media(
-                    InputMediaPhoto(data["coverImage"], caption=data["metadata"]),
+                    InputMediaPhoto(data["coverImage"], caption=data["metadata"], parse_mode=ParseMode.HTML),
                     reply_markup=InlineKeyboardMarkup(data["button"]),
-                    parse_mode=ParseMode.HTML,
                 )
             except WebpageMediaEmpty:
                 cover = await self.get_cover(data["coverImage"])
                 await query.message.edit_media(
-                    InputMediaPhoto(str(cover), caption=data["metadata"]),
+                    InputMediaPhoto(str(cover), caption=data["metadata"], parse_mode=ParseMode.HTML),
                     reply_markup=InlineKeyboardMarkup(data["button"]),
-                    parse_mode=ParseMode.HTML,
                 )
                 await cover.unlink()
             except (FloodWait, MessageNotModified) as e:
