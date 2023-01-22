@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, ClassVar, Mapping, MutableMapping, Optional
 
 from aiopath import AsyncPath
+from pyrogram.enums.parse_mode import ParseMode
 from pyrogram.errors import (
     FloodWait,
     MessageNotModified,
@@ -589,6 +590,7 @@ class Anime(plugin.Plugin):
                 photo=data["coverImage"],
                 reply_markup=InlineKeyboardMarkup(data["button"]) if data["button"] else None,
                 reply_to_message_id=ctx.message.id,
+                parse_mode=ParseMode.HTML,
             )
         except WebpageMediaEmpty:
             cover = await self.get_cover(data["coverImage"])
@@ -597,5 +599,6 @@ class Anime(plugin.Plugin):
                 photo=str(cover),
                 reply_markup=InlineKeyboardMarkup(data["button"]) if data["button"] else None,
                 reply_to_message_id=ctx.message.id,
+                parse_mode=ParseMode.HTML,
             )
             await cover.unlink()
