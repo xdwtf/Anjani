@@ -617,7 +617,7 @@ err-im-not-admin: "I'm not an admin here! I need to be an admin to do this."
 Anime-button: Anime
 Anime-help: |
   An Anilist Plugin
-**Commands**:
+  **Commands:**
   × `/anilist <name>` : Search Anime name
   × `/anilist airing` : Get Airings
   × `/anilist upcoming` : Get Upcomings
