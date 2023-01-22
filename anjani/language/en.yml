@@ -613,3 +613,13 @@ err-unexpected: "An unexpected error occurred.! \n\n**Error:** `{}`"
 err-msg-format-parsing: "**Message format parsing error!**\n**Error on key:** `{err}`."
 err-im-not-admin: "I'm not an admin here! I need to be an admin to do this."
 #endregion
+#region Anime
+Anime-button: Anime
+Anime-help: |
+  An Anilist Plugin
+**Commands**:
+  × `/anilist <name>` : Search Anime name
+  × `/anilist airing` : Get Airings
+  × `/anilist upcoming` : Get Upcomings
+  × `/anilist trending` : Get Trendings
+#endregion
