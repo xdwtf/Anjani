@@ -243,8 +243,7 @@ class Anime(plugin.Plugin):
     """
 
     name: ClassVar[str] = "Anime"
-    # TO-DO: add helpable
-    helpable: ClassVar[bool] = False
+    helpable: ClassVar[bool] = True
 
     move_step: MutableMapping[str, int]
 
