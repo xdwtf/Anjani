@@ -183,6 +183,25 @@ class Misc(plugin.Plugin):
         )
         return None
 
+    @command.filters(filters.group)
+    async def cmd_pat(self, ctx: command.Context) -> Optional[str]:
+        """Pat member with neko pat."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        async with self.bot.http.get("https://www.nekos.life/api/v2/img/pat") as pat:
+            if pat.status != 200:
+                return await self.text(chat.id, "err-api-down")
+            res = await pat.json()
+
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_animation(
+            chat.id,
+            res["url"],
+            reply_to_message_id=msg.id,
+            caption=text,
+        )
+        return None
+
     async def cmd_ud(self, ctx: command.Context) -> Optional[str]:
         """urban dictionary"""
         tex = ctx.input.split()[-1]
