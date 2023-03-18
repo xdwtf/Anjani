@@ -28,7 +28,6 @@ import dotenv
 from . import DEFAULT_CONFIG_PATH
 from .core import Anjani
 from .util.config import TelegramConfig
-from flask import Flask
 
 log = logging.getLogger("launch")
 
@@ -139,15 +138,5 @@ def start() -> None:
     # Initialize bot
     bot = Anjani.init_and_run(config, loop=loop)
 
-    # Add Flask
-    app = Flask(__name__)
-
-    @app.route("/")
-    def hello():
-        return "Hello from Flask!"
-
     # Run the bot
     aiorun.run(bot, loop=loop if _uvloop else None)
-
-    # Start Flask application
-    app.run(host="0.0.0.0", port=8080)
