@@ -14,18 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from flask import Flask
-import threading
 from anjani import main
 
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return 'Hello, World!'
-
 if __name__ == "__main__":
-    thread1 = threading.Thread(target=main.start)
-    thread2 = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 8080})
-    thread1.start()
-    thread2.start()
+    main.start()
