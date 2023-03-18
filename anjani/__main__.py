@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from flask import Flask
-
+import threading
+import subprocess
 from anjani import main
 
 app = Flask(__name__)
@@ -25,5 +26,7 @@ def index():
     return 'Hello, World!'
 
 if __name__ == "__main__":
-    main.start()
+    thread = threading.Thread(target=main.start)
+    thread.start()
+
     app.run()
