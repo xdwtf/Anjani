@@ -29,6 +29,8 @@ RUN poetry install --no-root --only main -E uvloop
 # copy the rest of files
 COPY . .
 
-RUN chmod +x ./entrypoint.sh
+# Expose port 8080 for the Flask app
+EXPOSE 8080
 
-ENTRYPOINT ["./entrypoint.sh"]
+# Start the bot
+CMD poetry run anjani
