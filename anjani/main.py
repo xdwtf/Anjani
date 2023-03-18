@@ -28,6 +28,7 @@ import dotenv
 from . import DEFAULT_CONFIG_PATH
 from .core import Anjani
 from .util.config import TelegramConfig
+from flask import Flask
 
 log = logging.getLogger("launch")
 
@@ -83,7 +84,7 @@ def _setup_log() -> None:
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-async def start() -> None:
+def start() -> None:
     """Main entry point for the bot."""
     config_path = Path(DEFAULT_CONFIG_PATH)
     if config_path.is_file():
@@ -113,7 +114,16 @@ async def start() -> None:
             log.info("Using uvloop event loop")
 
     log.info("Initializing bot")
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+
+    # Add Flask
+    app = Flask(__name__)
+
+    @app.route("/")
+    def hello():
+        return "Hello from Flask!"
+
+    app.run(host="0.0.0.0", port=8080)
 
     # Initialize config
     config_data: MutableMapping[str, Any] = {
@@ -135,6 +145,4 @@ async def start() -> None:
     if any(key not in config for key in {"api_id", "api_hash", "bot_token", "db_uri"}):
         return log.error("Configuration must be done correctly before running the bot.")
 
-    await Anjani.init_and_run(config, loop=loop)
-
-    loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=loop)))
+    aiorun.run(Anjani.init_and_run(config, loop=loop), loop=loop if _uvloop else None)
