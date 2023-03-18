@@ -83,7 +83,7 @@ def _setup_log() -> None:
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def start() -> None:
+async def start() -> None:
     """Main entry point for the bot."""
     config_path = Path(DEFAULT_CONFIG_PATH)
     if config_path.is_file():
@@ -113,7 +113,7 @@ def start() -> None:
             log.info("Using uvloop event loop")
 
     log.info("Initializing bot")
-    loop = asyncio.new_event_loop()
+    loop = asyncio.get_event_loop()
 
     # Initialize config
     config_data: MutableMapping[str, Any] = {
@@ -135,4 +135,6 @@ def start() -> None:
     if any(key not in config for key in {"api_id", "api_hash", "bot_token", "db_uri"}):
         return log.error("Configuration must be done correctly before running the bot.")
 
-    aiorun.run(Anjani.init_and_run(config, loop=loop), loop=loop if _uvloop else None)
+    await Anjani.init_and_run(config, loop=loop)
+
+    loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop=loop)))
