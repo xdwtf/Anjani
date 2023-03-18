@@ -135,8 +135,4 @@ def start() -> None:
     if any(key not in config for key in {"api_id", "api_hash", "bot_token", "db_uri"}):
         return log.error("Configuration must be done correctly before running the bot.")
 
-    # Initialize bot
-    bot = Anjani.init_and_run(config, loop=loop)
-
-    # Run the bot
-    aiorun.run(bot, loop=loop if _uvloop else None)
+    aiorun.run(Anjani.init_and_run(config, loop=loop), loop=loop if _uvloop else None)
