@@ -15,34 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from flask import Flask
-from threading import Thread
+
 from anjani import main
-import signal
-import sys
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    # Add your custom logic here
-    return "Welcome to my bot!"
-
-def signal_handler(sig, frame):
-    print('Received SIGTERM, shutting down...')
-    # Stop the bot
-    main.stop()
-    # Stop the Flask app
-    sys.exit(0)
+@app.route('/')
+def index():
+    return 'Hello, World!'
 
 if __name__ == "__main__":
-    # Start the bot in a separate thread
-    print('Sarting botx...')
-    bot_thread = Thread(target=main.start)
-    bot_thread.daemon = True
-    bot_thread.start()
-
-    # Set up a signal handler for SIGTERM
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    # Run the Flask app on port 8080
-    app.run(host="0.0.0.0", port=8080)
+    main.start()
+    app.run()
