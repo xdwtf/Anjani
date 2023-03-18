@@ -33,4 +33,4 @@ COPY . .
 EXPOSE 8080
 
 # Start both bot and Flask app
-CMD python -m anjani
+CMD [ "bash", "x.sh" ]
