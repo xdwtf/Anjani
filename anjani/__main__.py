@@ -15,6 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from anjani import main
+from flask import Flask
+
+def start_flask_app() -> None:
+    """Start the Flask application."""
+    app = Flask(__name__)
+
+    @app.route("/")
+    def hello():
+        return "Hello from Flask!"
+
+    app.run(host="0.0.0.0", port=8080)
+
 
 if __name__ == "__main__":
     main.start()
+    start_flask_app()
