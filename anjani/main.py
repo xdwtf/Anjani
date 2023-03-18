@@ -116,15 +116,6 @@ def start() -> None:
     log.info("Initializing bot")
     loop = asyncio.new_event_loop()
 
-    # Add Flask
-    app = Flask(__name__)
-
-    @app.route("/")
-    def hello():
-        return "Hello from Flask!"
-
-    app.run(host="0.0.0.0", port=8080)
-
     # Initialize config
     config_data: MutableMapping[str, Any] = {
         "api_id": os.environ.get("API_ID"),
@@ -145,4 +136,18 @@ def start() -> None:
     if any(key not in config for key in {"api_id", "api_hash", "bot_token", "db_uri"}):
         return log.error("Configuration must be done correctly before running the bot.")
 
-    aiorun.run(Anjani.init_and_run(config, loop=loop), loop=loop if _uvloop else None)
+    # Initialize bot
+    bot = Anjani.init_and_run(config, loop=loop)
+
+    # Add Flask
+    app = Flask(__name__)
+
+    @app.route("/")
+    def hello():
+        return "Hello from Flask!"
+
+    # Run the bot
+    aiorun.run(bot, loop=loop if _uvloop else None)
+
+    # Start Flask application
+    app.run(host="0.0.0.0", port=8080)
