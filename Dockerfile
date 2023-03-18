@@ -32,5 +32,5 @@ COPY . .
 # Expose port 8080 for the Flask app
 EXPOSE 8080
 
-# Start the bot
-CMD python -m anjani & flask run --host=0.0.0.0 --port=8080
+# Start both bot and Flask app
+CMD ["python", "/anjani/__main__.py"]
