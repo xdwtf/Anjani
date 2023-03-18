@@ -29,4 +29,4 @@ if __name__ == "__main__":
     thread = threading.Thread(target=main.start)
     thread.start()
 
-    app.run()
+    app.run(host="0.0.0.0", port=8080)
