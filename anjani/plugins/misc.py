@@ -20,8 +20,10 @@ from typing import Any, ClassVar, Optional
 from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
 
-from anjani import command, filters, plugin
+from anjani import command, filters, listener, plugin
+from pyrogram.types import Message
 
+import re, json, random, requests
 
 class Paste:
     def __init__(self, session: ClientSession, name: str, url: str):
@@ -85,6 +87,7 @@ class Misc(plugin.Plugin):
 
         return out_str
 
+    @command.filters(filters.private)
     async def cmd_paste(self, ctx: command.Context, service: Optional[str] = None) -> Optional[str]:
         if not ctx.msg.reply_to_message:
             return None
@@ -96,7 +99,7 @@ class Misc(plugin.Plugin):
         reply_msg = ctx.msg.reply_to_message
 
         data: Any
-        if reply_msg.document:
+        if (reply_msg.document and reply_msg.document.file_size < 10000000):
             file = AsyncPath(await reply_msg.download())
             data = await file.read_text()
             await file.unlink()
@@ -149,6 +152,20 @@ class Misc(plugin.Plugin):
             disable_web_page_preview=True,
         )
 
+    @command.filters(filters.admin_only)
+    async def cmd_echo(self, ctx: command.Context) -> str:
+        """Panda to Echo."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_message(
+            chat.id,
+            text,
+            reply_to_message_id=msg.id,
+        )
+        await ctx.msg.delete()
+        return None
+
     @command.filters(filters.group)
     async def cmd_slap(self, ctx: command.Context) -> Optional[str]:
         """Slap member with neko slap."""
@@ -167,3 +184,68 @@ class Misc(plugin.Plugin):
             caption=text,
         )
         return None
+
+    @command.filters(filters.group)
+    async def cmd_pat(self, ctx: command.Context) -> Optional[str]:
+        """Pat member with neko pat."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        async with self.bot.http.get("https://www.nekos.life/api/v2/img/pat") as pat:
+            if pat.status != 200:
+                return await self.text(chat.id, "err-api-down")
+            res = await pat.json()
+
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_animation(
+            chat.id,
+            res["url"],
+            reply_to_message_id=msg.id,
+            caption=text,
+        )
+        return None
+
+    async def cmd_ud(self, ctx: command.Context) -> Optional[str]:
+        """urban dictionary"""
+        tex = ctx.input.split()[-1]
+        chat = ctx.msg.chat
+        ud = f'http://api.urbandictionary.com/v0/define?term={tex}'
+        res = requests.get(ud)
+        ret = json.loads(res.text)
+        try:
+            word = ret["list"][0]["word"]
+            definition = ret["list"][0]["definition"]
+            example = ret["list"][0]["example"]
+            y = f"Text: {word}\n\nMeaning: {definition}\n\nExample: {example}"
+            await self.bot.client.send_message(
+            chat.id,
+            text=y,
+            reply_to_message_id=ctx.msg.id,
+        )
+        except Exception as e:
+            return None
+
+    @listener.priority(95)
+    @listener.filters(filters.regex(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/") & filters.group & ~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        """Listen Instagram Reel"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/"
+        xd = re.findall(Pattern, message.text)
+        url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
+        querystring = {"url": xd[0]}
+        headers = {
+            "X-RapidAPI-Key": self.bot.config.get("rapidapi_key"),
+            "X-RapidAPI-Host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com",
+        }
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        reel= json.loads(response.text)
+        self.log.info(f"Received message: {xd[0]}")
+        try:
+            await self.bot.client.send_video(
+            chat.id,
+            reel["media"],
+            reply_to_message_id=ie.id,
+        )
+        except Exception as e:
+            return None

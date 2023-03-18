@@ -1,0 +1,11 @@
+name: Update Python Poetry packages
+
+on: workflow_dispatch
+
+jobs:
+  update-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dishapatel010/action-poetry-package-update@V2.0.1
+        with:
+          base-branch: 18032023  # Can also be `master`, for example
