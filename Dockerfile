@@ -45,4 +45,4 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --no-root --only main -E all
 
 # Command to run when container started
-CMD ["poetry", "run", "anjani"]
+CMD python -m anjani & flask run --host=0.0.0.0 --port=8080
