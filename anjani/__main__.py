@@ -36,6 +36,7 @@ def signal_handler(sig, frame):
 
 if __name__ == "__main__":
     # Start the bot in a separate thread
+    print('Sarting botx...')
     bot_thread = Thread(target=main.start)
     bot_thread.daemon = True
     bot_thread.start()
