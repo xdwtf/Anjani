@@ -274,21 +274,20 @@ class Misc(plugin.Plugin):
             return None
 
     @listener.priority(95)
-    @listener.filters(filters.regex(platforms_regex) & filters.group & ~filters.outgoing)
+    @listener.filters(filters.regex(platforms_regex) & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Listen Music Links"""
         chat = message.chat
         ie = message.reply_to_message or message
         xd = re.findall(platforms_regex, message.text)
         response = requests.get(xd[0])
-        if response.status_code == 200:
-            self.log.info(f"Received message: {xd[0]}")
-            data = response.json()
-            links_by_platform = data.get("linksByPlatform", {})
-            
+        self.log.info(f"Received message: {xd[0]}")
+        data = response.json()
+        links_by_platform = data.get("linksByPlatform", {})
+        try:
             platforms = []
             urls = []
-            
+
             for platform, platform_data in links_by_platform.items():
                 url = platform_data.get("url")
                 platforms.append(f"[{platform}]({url})")
@@ -301,5 +300,5 @@ class Misc(plugin.Plugin):
                 parse_mode=MARKDOWN,
                 disable_web_page_preview=True,
             )
-        else:
-            print("Error: Request failed with status code", response.status_code)
+        except Exception as e:
+            return None
