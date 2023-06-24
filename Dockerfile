@@ -17,8 +17,7 @@ COPY pyproject.toml poetry.lock ./
 # ignore pip root user warning
 ENV PIP_ROOT_USER_ACTION=ignore
 
-RUN pip install --upgrade pip
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+RUN pip install poetry
 
 # Add poetry environment
 ENV PATH="${PATH}:/root/.local/bin:$PATH"
