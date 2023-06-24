@@ -25,6 +25,29 @@ from pyrogram.types import Message
 
 import re, json, random, requests
 
+platforms_regex = re.compile(r'('
+                             r'https?://open\.spotify\.com/(album|track|playlist)/[a-zA-Z0-9]+(/.*)?|'
+                             r'https?://itunes\.apple\.com/[a-z]{2}/(album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
+                             r'https?://music\.apple\.com/[a-z]{2}/(album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
+                             r'https?://music\.youtube\.com/(watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+|watch\?v=[a-zA-Z0-9_-]+)|'
+                             r'https?://www\.youtube\.com/(watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+|watch\?v=[a-zA-Z0-9_-]+)|'
+                             r'https?://www\.google\.com/search\?.*&(source=lnms&tbm=isch&q=)?spotify\+([^&]*(&[^&]*)*)?|'
+                             r'https?://play\.google\.com/store/music/album/[^/?#]+/[^/?#]+|'
+                             r'https?://www\.pandora\.com/artist/[^/?#]+/[^/?#]+|'
+                             r'https?://www\.deezer\.com/(album|track|playlist)/[0-9]+|'
+                             r'https?://listen\.tidal\.com/(album|track|playlist)/[0-9]+|'
+                             r'https?://www\.amazon\.(com|co\.uk|de|fr|ca)/gp/product/[^/?#]+|'
+                             r'https?://music\.amazon\.(com|co\.uk|de|fr|ca)/(albums|artists|playlists)/[^/?#]+|'
+                             r'https?://soundcloud\.com/[^/?#]+/[^/?#]+|'
+                             r'https?://us\.napster\.com/(artist|album|track)/[^/?#]+|'
+                             r'https?://music\.yandex\.ru/(album|track|playlist)/[0-9]+|'
+                             r'https?://spinrilla\.com/songs/[^/?#]+|'
+                             r'https?://audius\.co/(artist|track|playlist)/[^/?#]+|'
+                             r'https?://www\.anghami\.com/.*|'
+                             r'https?://www\.boomplay\.com/songs/[0-9]+|'
+                             r'https?://audiomack\.com/[^/?#]+/song/[^/?#]+'
+                             r')')
+
 class Paste:
     def __init__(self, session: ClientSession, name: str, url: str):
         self.__session = session
@@ -249,3 +272,34 @@ class Misc(plugin.Plugin):
         )
         except Exception as e:
             return None
+
+    @listener.priority(95)
+    @listener.filters(filters.regex(platforms_regex) & filters.group & ~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        """Listen Music Links"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        xd = re.findall(platforms_regex, message.text)
+        response = requests.get(xd[0])
+        if response.status_code == 200:
+            self.log.info(f"Received message: {xd[0]}")
+            data = response.json()
+            links_by_platform = data.get("linksByPlatform", {})
+            
+            platforms = []
+            urls = []
+            
+            for platform, platform_data in links_by_platform.items():
+                url = platform_data.get("url")
+                platforms.append(f"[{platform}]({url})")
+
+            link_text = " | ".join(platforms)
+            await self.bot.client.send_message(
+                chat.id,
+                text=link_text,
+                reply_to_message_id=ie.id,
+                parse_mode=MARKDOWN,
+                disable_web_page_preview=True,
+            )
+        else:
+            print("Error: Request failed with status code", response.status_code)
