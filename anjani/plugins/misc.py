@@ -280,7 +280,8 @@ class Misc(plugin.Plugin):
         chat = message.chat
         ie = message.reply_to_message or message
         xd = re.findall(platforms_regex, message.text)
-        response = requests.get(xd[0])
+        url = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
+        response = requests.get(url)
         self.log.info(f"Received message: {xd[0]}")
         data = response.json()
         links_by_platform = data.get("linksByPlatform", {})
