@@ -308,5 +308,4 @@ class Misc(plugin.Plugin):
                 return None
 
         except Exception as e:
-            self.log.warning(f"An error occurred while processing the message: {e}")
             return None
