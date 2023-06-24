@@ -293,15 +293,17 @@ class Misc(plugin.Plugin):
                 artist_name = song_entity.get("artistName")
                 title = song_entity.get("title")
                 links_by_platform = data.get("linksByPlatform", {})
+                pu = data.get("pageUrl")
                 platforms = []
                 urls = []
                 for platform, platform_data in links_by_platform.items():
                     url = platform_data.get("url")
                     platforms.append(f"[{platform}]({url})")
 
-                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**:\n\n'
+                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
                 link_text = " | ".join(platforms)
-                nt = um + link_text
+                li = f'\n[View on Odesli]({pu})'
+                nt = um + link_text + li
                 await self.bot.client.send_message(
                     chat.id,
                     text=nt,
