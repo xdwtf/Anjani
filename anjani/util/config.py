@@ -46,6 +46,7 @@ class Config:
 
         self.LOGIN_URL = getenv("LOGIN_URL")
         self.PLUGIN_FLAG = [i.strip() for i in getenv("PLUGIN_FLAG", "").split(";")]
+        self.RAPIDAPI_KEY = getenv("RAPIDAPI_KEY")
 
         self.IS_CI = getenv("IS_CI", "false").lower() == "true"
 
