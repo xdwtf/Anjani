@@ -279,7 +279,7 @@ class Misc(plugin.Plugin):
         """Listen Music Links"""
         chat = message.chat
         ie = message.reply_to_message or message
-        xd = re.findall(platforms_regex, message.text)
+        xd = platforms_regex.findall(message.text)
 
         try:
             if xd:
