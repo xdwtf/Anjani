@@ -295,7 +295,7 @@ class Misc(plugin.Plugin):
                     url = platform_data.get("url")
                     platforms.append(f"[{platform}]({url})")
 
-                um = f'**{user.mention}** shared song:\n\n'
+                um = f'**{userx.mention}** shared song:\n\n'
                 link_text = " | ".join(platforms)
                 nt = um + link_text
                 await self.bot.client.send_message(
