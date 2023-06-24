@@ -279,27 +279,34 @@ class Misc(plugin.Plugin):
         """Listen Music Links"""
         chat = message.chat
         ie = message.reply_to_message or message
-        xd = platforms_regex.search(message.text)
-        url = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
-        response = requests.get(url)
-        self.log.info(f"Received message: {xd[0]}")
-        data = response.json()
-        links_by_platform = data.get("linksByPlatform", {})
+        xd = re.findall(platforms_regex, message.text)
+
         try:
-            platforms = []
-            urls = []
+            if xd:
+                urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
+                response = requests.get(urlx)
+                self.log.info(f"Received message: {urlx}")
+                data = response.json()
+                links_by_platform = data.get("linksByPlatform", {})
+                platforms = []
+                urls = []
 
-            for platform, platform_data in links_by_platform.items():
-                url = platform_data.get("url")
-                platforms.append(f"[{platform}]({url})")
+                for platform, platform_data in links_by_platform.items():
+                    url = platform_data.get("url")
+                    platforms.append(f"[{platform}]({url})")
 
-            link_text = " | ".join(platforms)
-            await self.bot.client.send_message(
-                chat.id,
-                text=link_text,
-                reply_to_message_id=ie.id,
-                parse_mode=MARKDOWN,
-                disable_web_page_preview=True,
-            )
+                link_text = " | ".join(platforms)
+
+                await self.bot.client.send_message(
+                    chat.id,
+                    text=link_text,
+                    reply_to_message_id=ie.id,
+                    parse_mode=MARKDOWN,
+                    disable_web_page_preview=True,
+                )
+            else:
+                return None
+
         except Exception as e:
+            self.log.warning(f"An error occurred while processing the message: {e}")
             return None
