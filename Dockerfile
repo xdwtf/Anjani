@@ -28,4 +28,8 @@ RUN ./preinstall.sh
 # copy the rest of files
 COPY . .
 
-CMD ["poetry", "run", "anjani"]
+# Expose port 8080 for the Flask app
+EXPOSE 8080
+
+# Start both bot and Flask app
+CMD [ "bash", "x.sh" ]
