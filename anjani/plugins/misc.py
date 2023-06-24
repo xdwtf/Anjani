@@ -22,6 +22,7 @@ from aiopath import AsyncPath
 
 from anjani import command, filters, listener, plugin
 from pyrogram.types import Message
+from pyrogram.enums.parse_mode import ParseMode
 
 import re, json, random, requests
 
@@ -299,7 +300,7 @@ class Misc(plugin.Plugin):
                     chat.id,
                     text=link_text,
                     reply_to_message_id=ie.id,
-                    parse_mode=MARKDOWN,
+                    parse_mode=ParseMode.MARKDOWN,
                     disable_web_page_preview=True,
                 )
             else:
