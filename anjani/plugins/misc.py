@@ -288,6 +288,10 @@ class Misc(plugin.Plugin):
                 urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
                 response = requests.request("GET", urlx)
                 data = response.json()
+                entities = data.get("entitiesByUniqueId", {})
+                song_entity = next(iter(entities.values()))
+                artist_name = song_entity.get("artistName")
+                title = song_entity.get("title")
                 links_by_platform = data.get("linksByPlatform", {})
                 platforms = []
                 urls = []
@@ -295,7 +299,7 @@ class Misc(plugin.Plugin):
                     url = platform_data.get("url")
                     platforms.append(f"[{platform}]({url})")
 
-                um = f'**{userx.mention}** shared song:\n\n'
+                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**':\n\n'
                 link_text = " | ".join(platforms)
                 nt = um + link_text
                 await self.bot.client.send_message(
