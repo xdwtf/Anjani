@@ -235,7 +235,7 @@ class Misc(plugin.Plugin):
         url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
         querystring = {"url": xd[0]}
         headers = {
-            "X-RapidAPI-Key": self.bot.config.get("rapidapi_key"),
+            "X-RapidAPI-Key": self.bot.config.RAPIDAPI_KEY,
             "X-RapidAPI-Host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com",
         }
         response = requests.request("GET", url, headers=headers, params=querystring)
