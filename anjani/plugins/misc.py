@@ -279,7 +279,7 @@ class Misc(plugin.Plugin):
         """Listen Music Links"""
         chat = message.chat
         ie = message.reply_to_message or message
-        xd = re.findall(platforms_regex, message.text)
+        xd = platforms_regex.search(message.text)
         url = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
         response = requests.get(url)
         self.log.info(f"Received message: {xd[0]}")
