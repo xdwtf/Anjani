@@ -279,6 +279,7 @@ class Misc(plugin.Plugin):
     async def on_message(self, message: Message) -> None:
         """Listen Music Links"""
         chat = message.chat
+        userx = message.from_user
         ie = message.reply_to_message or message
         xd = platforms_regex.findall(message.text)
 
@@ -294,11 +295,12 @@ class Misc(plugin.Plugin):
                     url = platform_data.get("url")
                     platforms.append(f"[{platform}]({url})")
 
+                um = f'**{user.mention}** shared song:\n\n'
                 link_text = " | ".join(platforms)
-                self.log.info(f"{link_text}")
+                nt = um + link_text
                 await self.bot.client.send_message(
                     chat.id,
-                    text=link_text,
+                    text=nt,
                     reply_to_message_id=ie.id,
                     parse_mode=ParseMode.MARKDOWN,
                     disable_web_page_preview=True,
