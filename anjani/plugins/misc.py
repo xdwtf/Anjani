@@ -29,7 +29,7 @@ import re, json, random, requests
 platforms_regex = re.compile(r'('
     r'https?://open\.spotify\.com/(?:album|track|playlist)/[a-zA-Z0-9]+(?:/.*)?|'
     r'https?://itunes\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
-    r'https?://music\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
+    r'https?://music\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)?|'
     r'https?://music\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
     r'https?://www\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
     r'https?://www\.google\.com/search\?.*&(?:source=lnms&tbm=isch&q=)?spotify\+[^&]*(?:&[^&]*)*|'
