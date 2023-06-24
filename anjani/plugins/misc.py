@@ -298,11 +298,12 @@ class Misc(plugin.Plugin):
                 urls = []
                 for platform, platform_data in links_by_platform.items():
                     url = platform_data.get("url")
-                    platforms.append(f"[{platform}]({url})")
+                    cw = platform.title()
+                    platforms.append(f"[{cw}]({url})")
 
                 um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
                 link_text = " | ".join(platforms)
-                li = f'\n[View on Odesli]({pu})'
+                li = f'\n\n[View on Odesli]({pu})'
                 nt = um + link_text + li
                 await self.bot.client.send_message(
                     chat.id,
