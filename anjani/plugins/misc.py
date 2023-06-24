@@ -299,7 +299,7 @@ class Misc(plugin.Plugin):
                     url = platform_data.get("url")
                     platforms.append(f"[{platform}]({url})")
 
-                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**':\n\n'
+                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**:\n\n'
                 link_text = " | ".join(platforms)
                 nt = um + link_text
                 await self.bot.client.send_message(
