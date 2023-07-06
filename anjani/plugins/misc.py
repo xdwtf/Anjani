@@ -24,7 +24,8 @@ from anjani import command, filters, listener, plugin
 from pyrogram.types import Message
 from pyrogram.enums.parse_mode import ParseMode
 
-import re, json, random, requests
+import re, json, random, requests, os, io, filetype, httpx
+from bs4 import BeautifulSoup
 
 platforms_regex = re.compile(r'('
     r'https?://open\.spotify\.com/(?:album|track|playlist)/[a-zA-Z0-9]+(?:/.*)?|'
