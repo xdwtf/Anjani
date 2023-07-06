@@ -318,9 +318,9 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-        @listener.priority(90)
+    @listener.priority(95)
     @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
-        async def on_message(self, message: Message) -> None:
+    async def on_message(self, message: Message) -> None:
         """Threads Handler"""
         chat = message.chat
         ie = message.reply_to_message or message
