@@ -276,6 +276,54 @@ class Misc(plugin.Plugin):
             return None
 
     @listener.priority(95)
+    @listener.filters(filters.regex(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+") & filters.group & ~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        """Threds Media Handler"""
+        text = message.text
+        # Find all URLs matching the pattern
+        urls = re.findall(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+", text)
+        for url in urls:
+            post_id_matches = re.findall(r"www.threads.net/t/([a-zA-Z0-9_-]+)", url)
+            if not post_id_matches:
+                continue
+
+            post_id = post_id_matches[0]
+
+            async with httpx.AsyncClient() as http_client:
+                response = await http_client.get("https://www.threads.net/")
+                if response.status_code != 200:
+                    return None
+
+                r = await http_client.get(f"https://www.threads.net/t/{post_id}/embed/")
+                soup = BeautifulSoup(r.text, "html.parser")
+                medias = []
+
+                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
+                    if video := div.find("video"):
+                        url = video.find("source").get("src")
+                        medias.append({"p": url, "w": 0, "h": 0})
+                    if image := div.find("img", {"class": "img"}):
+                        url = image.get("src")
+                        medias.append({"p": url, "w": 0, "h": 0})
+
+                files = []
+                for media in medias:
+                    response = await http_client.get(media["p"])
+                    file = io.BytesIO(response.content)
+                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
+                    files.append({"p": file, "w": media["w"], "h": media["h"]})
+
+                for file in files:
+                    filepath = f"{file['p'].name}"
+                    with open(filepath, 'wb') as f:
+                        f.write(file['p'].getbuffer())
+
+                    await self.bot.client.send_document(chat.id='@isthisuser', document=filepath, caption=url)
+             
+                    # Remove the downloaded file
+                    os.remove(filepath)
+                
+    @listener.priority(95)
     @listener.filters(filters.regex(platforms_regex) & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Listen Music Links"""
