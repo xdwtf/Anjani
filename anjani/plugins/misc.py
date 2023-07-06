@@ -327,7 +327,8 @@ class Misc(plugin.Plugin):
         Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
         xd = re.findall(Pattern, message.text)
         self.log.info(f"Received message: {xd[0]}")
-    
+        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
+        
         try:
             async with httpx.AsyncClient() as http_client:
                 response_homepage = await http_client.get("https://www.threads.net/")
@@ -344,10 +345,10 @@ class Misc(plugin.Plugin):
                 if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
                     if video := div.find("video"):
                         url = video.find("source").get("src")
-                        medias.append({"p": url, "w": 0, "h": 0})
-                    if image := div.find("img", {"class": "img"}):
+                        medias.append({"p": url, "type": "video"})
+                    elif image := div.find("img", {"class": "img"}):
                         url = image.get("src")
-                        medias.append({"p": url, "w": 0, "h": 0})
+                        medias.append({"p": url, "type": "image"})
 
                 if not medias:
                     self.log.info(f"no media found for {xd[0]}")
@@ -369,8 +370,12 @@ class Misc(plugin.Plugin):
                     with open(filepath, 'wb') as f:
                         f.write(file['p'].getbuffer())
 
-                    await self.bot.client.send_document(chat.id, document=filepath, caption=xd[0], reply_to_message_id=ie.id)
-
+                if file["type"] == "video":
+                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+                elif file["type"] == "image":
+                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+                else:
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
                     # Remove the downloaded file
                     os.remove(filepath)
 
