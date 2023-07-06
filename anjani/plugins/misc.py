@@ -318,7 +318,8 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-        @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
+        @listener.priority(90)
+    @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
         async def on_message(self, message: Message) -> None:
         """Threads Handler"""
         chat = message.chat
@@ -365,7 +366,7 @@ class Misc(plugin.Plugin):
                 with open(filepath, 'wb') as f:
                     f.write(file['p'].getbuffer())
 
-                await self.bot.client.send_document(chat.id, document=filepath, caption=url, reply_to_message_id=ie.id)
+                await self.bot.client.send_document(chat.id, document=filepath, caption=xd[0], reply_to_message_id=ie.id)
 
                 # Remove the downloaded file
                 os.remove(filepath)
