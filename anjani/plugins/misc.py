@@ -276,7 +276,7 @@ class Misc(plugin.Plugin):
             return None
 
     @listener.priority(95)
-    @listener.filters(filters.regex(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+") & filters.group & ~filters.outgoing)
+    @listener.filters(filters.regex(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+") & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Threads Media Handler"""
         chat = message.chat
