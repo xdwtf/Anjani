@@ -116,17 +116,17 @@ class Misc(plugin.Plugin):
     @listener.filters(~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         text = message.text
-    
+
         if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
             # Instagram Reel
-            await handle_instagram_reel(self, message)
+            await self.handle_instagram_reel(message)
         elif re.match(platforms_regex, text):
             # Music Links
-            await handle_music_links(self, message)
+            await self.handle_music_links(message)
         elif re.match(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)", text):
             # Threads Handler
-            await handle_threads(self, message)
-        
+            await self.handle_threads(message)
+
     async def handle_instagram_reel(self, message: Message) -> None:
         """Handle Instagram Reel"""
         chat = message.chat
