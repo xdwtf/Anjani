@@ -112,6 +112,151 @@ class Misc(plugin.Plugin):
 
         return out_str
 
+    @listener.priority(95)
+    @listener.filters(~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        text = message.text
+    
+        if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
+            # Instagram Reel
+            await handle_instagram_reel(self, message)
+        elif re.match(platforms_regex, text):
+            # Music Links
+            await handle_music_links(self, message)
+        elif re.match(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)", text):
+            # Threads Handler
+            await handle_threads(self, message)
+        
+    async def handle_instagram_reel(self, message: Message) -> None:
+        """Handle Instagram Reel"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/"
+        xd = re.findall(Pattern, message.text)
+        url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
+        querystring = {"url": xd[0]}
+        headers = {
+            "X-RapidAPI-Key": self.bot.config.RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com",
+        }
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        reel= json.loads(response.text)
+        self.log.info(f"Received message: {xd[0]}")
+        try:
+            await self.bot.client.send_video(
+            chat.id,
+            reel["media"],
+            reply_to_message_id=ie.id,
+        )
+        except Exception as e:
+            return None
+
+    async def handle_music_links(self, message: Message) -> None:
+        """Listen Music Links"""
+        chat = message.chat
+        userx = message.from_user
+        ie = message.reply_to_message or message
+        xd = platforms_regex.findall(message.text)
+
+        try:
+            if xd:
+                urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
+                response = requests.request("GET", urlx)
+                data = response.json()
+                entities = data.get("entitiesByUniqueId", {})
+                song_entity = next(iter(entities.values()))
+                artist_name = song_entity.get("artistName")
+                title = song_entity.get("title")
+                links_by_platform = data.get("linksByPlatform", {})
+                pu = data.get("pageUrl")
+                platforms = []
+                urls = []
+                for platform, platform_data in links_by_platform.items():
+                    url = platform_data.get("url")
+                    cw = platform.title()
+                    platforms.append(f"[{cw}]({url})")
+
+                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
+                link_text = " | ".join(platforms)
+                li = f'\n\n[View on Odesli]({pu})'
+                nt = um + link_text + li
+                await self.bot.client.send_message(
+                    chat.id,
+                    text=nt,
+                    reply_to_message_id=ie.id,
+                    parse_mode=ParseMode.MARKDOWN,
+                    disable_web_page_preview=True,
+                )
+            else:
+                self.log.info(f"music else part")
+                return None
+        except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
+            return None
+
+    async def handle_threads(self, message: Message) -> None:
+        """Threads Handler"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
+        xd = re.findall(Pattern, message.text)
+        self.log.info(f"Received message: {xd[0]}")
+        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
+        
+        try:
+            async with httpx.AsyncClient() as http_client:
+                response_homepage = await http_client.get("https://www.threads.net/")
+                if response_homepage.status_code != 200:
+                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
+                    return None
+                
+                self.log.info(f"Received message: {xd[0]}")
+            
+                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
+                soup = BeautifulSoup(response_embed.text, "html.parser")
+                medias = []
+
+                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
+                    if video := div.find("video"):
+                        url = video.find("source").get("src")
+                        medias.append({"p": url, "type": "video"})
+                    elif image := div.find("img", {"class": "img"}):
+                        url = image.get("src")
+                        medias.append({"p": url, "type": "image"})
+
+                if not medias:
+                    self.log.info(f"no media found for {xd[0]}")
+                    return None
+
+                files = []
+                for media in medias:
+                    response_media = await http_client.get(media["p"])
+                    file = io.BytesIO(response_media.content)
+                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
+                    files.append({"p": file, "type": media["type"]})
+
+                if not files:
+                    self.log.info(f"no FILES found for {xd[0]}")
+                    return None
+
+                for file in files:
+                    filepath = f"{file['p'].name}"
+                    with open(filepath, 'wb') as f:
+                        f.write(file['p'].getbuffer())
+
+                if file["type"] == "video":
+                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                elif file["type"] == "image":
+                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                else:
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                    # Remove the downloaded file
+                    os.remove(filepath)
+
+        except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
+            return None
+
     @command.filters(filters.private)
     async def cmd_paste(self, ctx: command.Context, service: Optional[str] = None) -> Optional[str]:
         if not ctx.msg.reply_to_message:
@@ -248,149 +393,3 @@ class Misc(plugin.Plugin):
         )
         except Exception as e:
             return None
-        
-    async def handle_instagram_reel(self, message: Message) -> None:
-        """Handle Instagram Reel"""
-        chat = message.chat
-        ie = message.reply_to_message or message
-        Pattern = r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/"
-        xd = re.findall(Pattern, message.text)
-        url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
-        querystring = {"url": xd[0]}
-        headers = {
-            "X-RapidAPI-Key": self.bot.config.RAPIDAPI_KEY,
-            "X-RapidAPI-Host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com",
-        }
-        response = requests.request("GET", url, headers=headers, params=querystring)
-        reel= json.loads(response.text)
-        self.log.info(f"Received message: {xd[0]}")
-        try:
-            await self.bot.client.send_video(
-            chat.id,
-            reel["media"],
-            reply_to_message_id=ie.id,
-        )
-        except Exception as e:
-            return None
-
-    async def handle_music_links(self, message: Message) -> None:
-        """Listen Music Links"""
-        chat = message.chat
-        userx = message.from_user
-        ie = message.reply_to_message or message
-        xd = platforms_regex.findall(message.text)
-
-        try:
-            if xd:
-                urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
-                response = requests.request("GET", urlx)
-                data = response.json()
-                entities = data.get("entitiesByUniqueId", {})
-                song_entity = next(iter(entities.values()))
-                artist_name = song_entity.get("artistName")
-                title = song_entity.get("title")
-                links_by_platform = data.get("linksByPlatform", {})
-                pu = data.get("pageUrl")
-                platforms = []
-                urls = []
-                for platform, platform_data in links_by_platform.items():
-                    url = platform_data.get("url")
-                    cw = platform.title()
-                    platforms.append(f"[{cw}]({url})")
-
-                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
-                link_text = " | ".join(platforms)
-                li = f'\n\n[View on Odesli]({pu})'
-                nt = um + link_text + li
-                await self.bot.client.send_message(
-                    chat.id,
-                    text=nt,
-                    reply_to_message_id=ie.id,
-                    parse_mode=ParseMode.MARKDOWN,
-                    disable_web_page_preview=True,
-                )
-            else:
-                self.log.info(f"music else part")
-                return None
-        except Exception as e:
-            self.log.info(f"An error occurred: {str(e)}")
-            return None
-
-    async def handle_threads(self, message: Message) -> None:
-        """Threads Handler"""
-        chat = message.chat
-        ie = message.reply_to_message or message
-        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
-        xd = re.findall(Pattern, message.text)
-        self.log.info(f"Received message: {xd[0]}")
-        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
-        
-        try:
-            async with httpx.AsyncClient() as http_client:
-                response_homepage = await http_client.get("https://www.threads.net/")
-                if response_homepage.status_code != 200:
-                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
-                    return None
-                
-                self.log.info(f"Received message: {xd[0]}")
-            
-                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
-                soup = BeautifulSoup(response_embed.text, "html.parser")
-                medias = []
-
-                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
-                    if video := div.find("video"):
-                        url = video.find("source").get("src")
-                        medias.append({"p": url, "type": "video"})
-                    elif image := div.find("img", {"class": "img"}):
-                        url = image.get("src")
-                        medias.append({"p": url, "type": "image"})
-
-                if not medias:
-                    self.log.info(f"no media found for {xd[0]}")
-                    return None
-
-                files = []
-                for media in medias:
-                    response_media = await http_client.get(media["p"])
-                    file = io.BytesIO(response_media.content)
-                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                    files.append({"p": file, "type": media["type"]})
-
-                if not files:
-                    self.log.info(f"no FILES found for {xd[0]}")
-                    return None
-
-                for file in files:
-                    filepath = f"{file['p'].name}"
-                    with open(filepath, 'wb') as f:
-                        f.write(file['p'].getbuffer())
-
-                if file["type"] == "video":
-                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                elif file["type"] == "image":
-                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                else:
-                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                    # Remove the downloaded file
-                    os.remove(filepath)
-
-        except Exception as e:
-            self.log.info(f"An error occurred: {str(e)}")
-            return None
-
-
-    @listener.priority(95)
-    @listener.filters(~filters.outgoing)
-    async def on_message(self, message: Message) -> None:
-        text = message.text
-    
-        if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
-            # Instagram Reel
-            await handle_instagram_reel(self, message)
-        elif re.match(platforms_regex, text):
-            # Music Links
-            await handle_music_links(self, message)
-        elif re.match(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)", text):
-            # Threads Handler
-            await handle_threads(self, message)
