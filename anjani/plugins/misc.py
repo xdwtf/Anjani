@@ -371,11 +371,11 @@ class Misc(plugin.Plugin):
                         f.write(file['p'].getbuffer())
 
                 if file["type"] == "video":
-                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
                 elif file["type"] == "image":
-                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
                 else:
-                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
                     # Remove the downloaded file
                     os.remove(filepath)
 
