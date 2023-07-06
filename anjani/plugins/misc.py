@@ -249,7 +249,6 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-    @listener.priority(95)
     @listener.filters(filters.regex(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/") & filters.group & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Listen Instagram Reel"""
