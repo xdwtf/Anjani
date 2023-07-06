@@ -276,7 +276,7 @@ class Misc(plugin.Plugin):
             return None
 
     @listener.priority(95)
-    @listener.filters(filters.regex(r"/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
+    @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Threads Media Handler"""
         chat = message.chat
@@ -295,6 +295,7 @@ class Misc(plugin.Plugin):
                 async with httpx.AsyncClient() as http_client:
                     response = await http_client.get("https://www.threads.net/")
                     if response.status_code != 200:
+                        self.log.warning(f"Failed to fetch homepage: {response.status_code}")
                         return None
 
                     r = await http_client.get(f"https://www.threads.net/t/{post_id}/embed/")
@@ -310,6 +311,7 @@ class Misc(plugin.Plugin):
                             medias.append({"p": url, "w": 0, "h": 0})
 
                     if not medias:
+                        self.log.info(f"No media found for post ID: {post_id}")
                         return None
 
                     files = []
@@ -320,19 +322,22 @@ class Misc(plugin.Plugin):
                         files.append({"p": file, "w": media["w"], "h": media["h"]})
 
                     if not files:
-                        return None
+                        self.log.warning(f"No files downloaded for post ID: {post_id}")
+                         return None
 
                     for file in files:
                         filepath = f"{file['p'].name}"
                         with open(filepath, 'wb') as f:
                             f.write(file['p'].getbuffer())
 
+                        self.log.info(f"Sending document for post ID: {post_id}, file path: {filepath}")
                         await self.bot.client.send_document(chat.id, document=filepath, caption=f"/t/{post_id}", reply_to_message_id=ie.id)
 
                         # Remove the downloaded file
                         os.remove(filepath)
+
         except Exception as e:
-            print(f"An error occurred: {str(e)}")
+            self.log.exception(f"An error occurred: {str(e)}")
             return None
                 
     @listener.priority(95)
