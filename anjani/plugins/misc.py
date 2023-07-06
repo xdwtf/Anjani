@@ -282,12 +282,12 @@ class Misc(plugin.Plugin):
         chat = message.chat
         ie = message.reply_to_message or message
         text = message.text
-        tp = r"/t/([a-zA-Z0-9_-]+)"
-
+        tp = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
+        post_ids = re.findall(tp, text)
+        self.log.info(post_ids)
+        
         try:
             # Find all post IDs matching the pattern
-            post_ids = re.findall(tp, text)
-
             if not post_ids:
                 return None
 
