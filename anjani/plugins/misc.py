@@ -24,8 +24,7 @@ from anjani import command, filters, listener, plugin
 from pyrogram.types import Message
 from pyrogram.enums.parse_mode import ParseMode
 
-import re, json, random, requests, os, io, filetype, httpx
-from bs4 import BeautifulSoup
+import re, json, random, requests
 
 platforms_regex = re.compile(r'('
     r'https?://open\.spotify\.com/(?:album|track|playlist)/[a-zA-Z0-9]+(?:/.*)?|'
@@ -316,69 +315,4 @@ class Misc(plugin.Plugin):
             else:
                 return None
         except Exception as e:
-            return None
-
-    @listener.priority(95)
-    @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
-    async def on_message(self, message: Message) -> None:
-        """Threads Handler"""
-        chat = message.chat
-        ie = message.reply_to_message or message
-        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
-        xd = re.findall(Pattern, message.text)
-        self.log.info(f"Received message: {xd[0]}")
-        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
-        
-        try:
-            async with httpx.AsyncClient() as http_client:
-                response_homepage = await http_client.get("https://www.threads.net/")
-                if response_homepage.status_code != 200:
-                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
-                    return None
-                
-                self.log.info(f"Received message: {xd[0]}")
-            
-                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
-                soup = BeautifulSoup(response_embed.text, "html.parser")
-                medias = []
-
-                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
-                    if video := div.find("video"):
-                        url = video.find("source").get("src")
-                        medias.append({"p": url, "type": "video"})
-                    elif image := div.find("img", {"class": "img"}):
-                        url = image.get("src")
-                        medias.append({"p": url, "type": "image"})
-
-                if not medias:
-                    self.log.info(f"no media found for {xd[0]}")
-                    return None
-
-                files = []
-                for media in medias:
-                    response_media = await http_client.get(media["p"])
-                    file = io.BytesIO(response_media.content)
-                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                    files.append({"p": file, "type": media["type"]})
-
-                if not files:
-                    self.log.info(f"no FILES found for {xd[0]}")
-                    return None
-
-                for file in files:
-                    filepath = f"{file['p'].name}"
-                    with open(filepath, 'wb') as f:
-                        f.write(file['p'].getbuffer())
-
-                if file["type"] == "video":
-                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                elif file["type"] == "image":
-                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                else:
-                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                    # Remove the downloaded file
-                    os.remove(filepath)
-
-        except Exception as e:
-            self.log.info(f"An error occurred: {str(e)}")
             return None
