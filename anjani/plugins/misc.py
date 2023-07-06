@@ -328,6 +328,12 @@ class Misc(plugin.Plugin):
         xd = re.findall(Pattern, message.text)
         self.log.info(f"Received message: {xd[0]}")
         try:
+            async with httpx.AsyncClient() as http_client:
+                response = await http_client.get("https://www.threads.net/")
+                if response.status_code != 200:
+                    self.log.info(f"Failed to fetch homepage: {response.status_code}")
+                    return None
             self.log.info(f"Received message: {xd[0]}")
         except Exception as e:
+            self.log.info("ex")
             return None
