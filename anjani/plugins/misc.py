@@ -359,7 +359,7 @@ class Misc(plugin.Plugin):
                     response_media = await http_client.get(media["p"])
                     file = io.BytesIO(response_media.content)
                     file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                    files.append({"p": file, "w": media["w"], "h": media["h"]})
+                    files.append({"p": file, "type": media["type"]})
 
                 if not files:
                     self.log.info(f"no FILES found for {xd[0]}")
