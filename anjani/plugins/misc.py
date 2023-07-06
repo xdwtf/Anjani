@@ -282,6 +282,10 @@ class Misc(plugin.Plugin):
         text = message.text
         # Find all URLs matching the pattern
         urls = re.findall(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+", text)
+        
+        if not urls:
+            return None
+        
         for url in urls:
             post_id_matches = re.findall(r"www.threads.net/t/([a-zA-Z0-9_-]+)", url)
             if not post_id_matches:
