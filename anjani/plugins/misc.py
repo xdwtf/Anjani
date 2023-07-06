@@ -279,6 +279,8 @@ class Misc(plugin.Plugin):
     @listener.filters(filters.regex(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+") & filters.group & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Threds Media Handler"""
+        chat = message.chat
+        ie = message.reply_to_message or message
         text = message.text
         # Find all URLs matching the pattern
         urls = re.findall(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+", text)
@@ -310,6 +312,9 @@ class Misc(plugin.Plugin):
                         url = image.get("src")
                         medias.append({"p": url, "w": 0, "h": 0})
 
+                if not medias:
+                    return None
+                
                 files = []
                 for media in medias:
                     response = await http_client.get(media["p"])
@@ -317,12 +322,15 @@ class Misc(plugin.Plugin):
                     file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
                     files.append({"p": file, "w": media["w"], "h": media["h"]})
 
+                if not files:
+                    return None
+                
                 for file in files:
                     filepath = f"{file['p'].name}"
                     with open(filepath, 'wb') as f:
                         f.write(file['p'].getbuffer())
 
-                    await self.bot.client.send_document(chat.id='@isthisuser', document=filepath, caption=url)
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=url, reply_to_message_id=ie.id)
              
                     # Remove the downloaded file
                     os.remove(filepath)
