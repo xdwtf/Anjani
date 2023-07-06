@@ -327,50 +327,52 @@ class Misc(plugin.Plugin):
         Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
         xd = re.findall(Pattern, message.text)
         self.log.info(f"Received message: {xd[0]}")
+    
         try:
             async with httpx.AsyncClient() as http_client:
-                response = await http_client.get("https://www.threads.net/")
-                if response.status_code != 200:
-                    self.log.info(f"Failed to fetch homepage: {response.status_code}")
+                response_homepage = await http_client.get("https://www.threads.net/")
+                if response_homepage.status_code != 200:
+                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
                     return None
-            self.log.info(f"Received message: {xd[0]}")
-            r = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
-            soup = BeautifulSoup(r.text, "html.parser")
-            medias = []
+                
+                self.log.info(f"Received message: {xd[0]}")
+            
+                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
+                soup = BeautifulSoup(response_embed.text, "html.parser")
+                medias = []
 
-            if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
-                if video := div.find("video"):
-                    url = video.find("source").get("src")
-                    medias.append({"p": url, "w": 0, "h": 0})
-                if image := div.find("img", {"class": "img"}):
-                    url = image.get("src")
-                    medias.append({"p": url, "w": 0, "h": 0})
+                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
+                    if video := div.find("video"):
+                        url = video.find("source").get("src")
+                        medias.append({"p": url, "w": 0, "h": 0})
+                    if image := div.find("img", {"class": "img"}):
+                        url = image.get("src")
+                        medias.append({"p": url, "w": 0, "h": 0})
 
-            if not medias:
-                self.log.info(f"no media found for {xd[0]}")
-                return None
+                if not medias:
+                    self.log.info(f"no media found for {xd[0]}")
+                    return None
 
-            files = []
-            for media in medias:
-                response = await http_client.get(media["p"])
-                file = io.BytesIO(response.content)
-                file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                files.append({"p": file, "w": media["w"], "h": media["h"]})
+                files = []
+                for media in medias:
+                    response_media = await http_client.get(media["p"])
+                    file = io.BytesIO(response_media.content)
+                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
+                    files.append({"p": file, "w": media["w"], "h": media["h"]})
 
-            if not files:
-                self.log.info(f"no FILES found for {xd[0]}")
-                return None
+                if not files:
+                    self.log.info(f"no FILES found for {xd[0]}")
+                    return None
 
-            for file in files:
-                filepath = f"{file['p'].name}"
-                with open(filepath, 'wb') as f:
-                    f.write(file['p'].getbuffer())
+                for file in files:
+                    filepath = f"{file['p'].name}"
+                    with open(filepath, 'wb') as f:
+                        f.write(file['p'].getbuffer())
 
-                await self.bot.client.send_document(chat.id, document=filepath, caption=xd[0], reply_to_message_id=ie.id)
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=xd[0], reply_to_message_id=ie.id)
 
-                # Remove the downloaded file
-                os.remove(filepath)
-
+                    # Remove the downloaded file
+                    os.remove(filepath)
 
         except Exception as e:
             self.log.info(f"An error occurred: {str(e)}")
