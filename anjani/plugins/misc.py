@@ -317,3 +317,17 @@ class Misc(plugin.Plugin):
                 return None
         except Exception as e:
             return None
+
+    @listener.priority(90)
+    @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        """Threads Handler"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
+        xd = re.findall(Pattern, message.text)
+        self.log.info(f"Received message: {xd[0]}")
+        try:
+            self.log.info(f"Received message: {xd[0]}")
+        except Exception as e:
+            return None
