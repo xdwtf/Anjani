@@ -323,7 +323,7 @@ class Misc(plugin.Plugin):
 
                     if not files:
                         self.log.warning(f"No files downloaded for post ID: {post_id}")
-                         return None
+                        return None
 
                     for file in files:
                         filepath = f"{file['p'].name}"
