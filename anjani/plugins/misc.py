@@ -314,8 +314,10 @@ class Misc(plugin.Plugin):
                     disable_web_page_preview=True,
                 )
             else:
+                self.log.info(f"music else part")
                 return None
         except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
             return None
 
     @listener.priority(95)
