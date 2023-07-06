@@ -37,7 +37,7 @@ aiopath = [
     {version = "^0.6.11", python = ">=3.10"},
 ]
 aiorun = "^2022.11.1"
-bs4 = "^beautifulsoup4"
+beautifulsoup4 = "^4.12.2"
 certifi = {version = ">=2022.12.7,<2024.0.0", platform = "windows"}
 colorlog = "^6.7.0"
 filetype = "^1.2.0"
