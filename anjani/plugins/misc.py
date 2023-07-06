@@ -251,7 +251,7 @@ class Misc(plugin.Plugin):
 
     @listener.priority(95)
     @listener.filters(filters.regex(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/") & filters.group & ~filters.outgoing)
-    async def on_message(self, message: Message) -> None:
+    async def on_message_reel(self, message: Message) -> None:
         """Listen Instagram Reel"""
         chat = message.chat
         ie = message.reply_to_message or message
@@ -277,7 +277,7 @@ class Misc(plugin.Plugin):
 
     @listener.priority(90)
     @listener.filters(filters.regex(platforms_regex) & ~filters.outgoing)
-    async def on_message(self, message: Message) -> None:
+    async def on_message_music(self, message: Message) -> None:
         """Listen Music Links"""
         chat = message.chat
         userx = message.from_user
@@ -320,7 +320,7 @@ class Misc(plugin.Plugin):
 
     @listener.priority(95)
     @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
-    async def on_message(self, message: Message) -> None:
+    async def on_message_threads(self, message: Message) -> None:
         """Threads Handler"""
         chat = message.chat
         ie = message.reply_to_message or message
