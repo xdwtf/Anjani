@@ -276,28 +276,22 @@ class Misc(plugin.Plugin):
             return None
 
     @listener.priority(95)
-    @listener.filters(filters.regex(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+") & ~filters.outgoing)
+    @listener.filters(filters.regex(r"/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Threads Media Handler"""
         chat = message.chat
         ie = message.reply_to_message or message
         text = message.text
+        tp = r"/t/([a-zA-Z0-9_-]+)"
 
         try:
-            # Find all URLs matching the pattern
-            urls = re.findall(r"https?://(?:www\.)threads\.net/t/[a-zA-Z0-9_-]+", text)
+            # Find all post IDs matching the pattern
+            post_ids = re.findall(tp, text)
 
-            if not urls:
+            if not post_ids:
                 return None
 
-            for url in urls:
-                print(url)
-                post_id_matches = re.findall(r"https?://www\.threads\.net/t/([a-zA-Z0-9_-]+)", url)
-                if not post_id_matches:
-                    continue
-
-                post_id = post_id_matches[0]
-
+            for post_id in post_ids:
                 async with httpx.AsyncClient() as http_client:
                     response = await http_client.get("https://www.threads.net/")
                     if response.status_code != 200:
@@ -333,7 +327,7 @@ class Misc(plugin.Plugin):
                         with open(filepath, 'wb') as f:
                             f.write(file['p'].getbuffer())
 
-                        await self.bot.client.send_document(chat.id, document=filepath, caption=url, reply_to_message_id=ie.id)
+                        await self.bot.client.send_document(chat.id, document=filepath, caption=f"/t/{post_id}", reply_to_message_id=ie.id)
 
                         # Remove the downloaded file
                         os.remove(filepath)
