@@ -318,8 +318,7 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-    @listener.priority(90)
-    @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
+        @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Threads Handler"""
         chat = message.chat
@@ -334,6 +333,44 @@ class Misc(plugin.Plugin):
                     self.log.info(f"Failed to fetch homepage: {response.status_code}")
                     return None
             self.log.info(f"Received message: {xd[0]}")
+            r = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
+            soup = BeautifulSoup(r.text, "html.parser")
+            medias = []
+
+            if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
+                if video := div.find("video"):
+                    url = video.find("source").get("src")
+                    medias.append({"p": url, "w": 0, "h": 0})
+                if image := div.find("img", {"class": "img"}):
+                    url = image.get("src")
+                    medias.append({"p": url, "w": 0, "h": 0})
+
+            if not medias:
+                self.log.info(f"no media found for {xd[0]}")
+                return None
+
+            files = []
+            for media in medias:
+                response = await http_client.get(media["p"])
+                file = io.BytesIO(response.content)
+                file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
+                files.append({"p": file, "w": media["w"], "h": media["h"]})
+
+            if not files:
+                self.log.info(f"no FILES found for {xd[0]}")
+                return None
+
+            for file in files:
+                filepath = f"{file['p'].name}"
+                with open(filepath, 'wb') as f:
+                    f.write(file['p'].getbuffer())
+
+                await self.bot.client.send_document(chat.id, document=filepath, caption=url, reply_to_message_id=ie.id)
+
+                # Remove the downloaded file
+                os.remove(filepath)
+
+
         except Exception as e:
-            self.log.info("ex")
+            self.log.info(f"An error occurred: {str(e)}")
             return None
