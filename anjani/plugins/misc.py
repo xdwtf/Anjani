@@ -249,6 +249,7 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
+    @listener.priority(95)
     @listener.filters(filters.regex(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/") & filters.group & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Listen Instagram Reel"""
@@ -278,13 +279,13 @@ class Misc(plugin.Plugin):
     @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
         """Threads Media Handler"""
+        self.log.info("bakatjrea")
         chat = message.chat
         ie = message.reply_to_message or message
         text = message.text
         tp = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
         post_ids = re.findall(tp, text)
         self.log.info(post_ids)
-        
         try:
             # Find all post IDs matching the pattern
             if post_ids:
@@ -311,7 +312,7 @@ class Misc(plugin.Plugin):
                             medias.append({"p": url, "w": 0, "h": 0})
 
                     if not medias:
-                        self.log.info(f"No media found for post ID: {post_id}")
+                        self.log.error(f"No media found for post ID: {post_id}")
                         return None
 
                     files = []
@@ -322,7 +323,7 @@ class Misc(plugin.Plugin):
                         files.append({"p": file, "w": media["w"], "h": media["h"]})
 
                     if not files:
-                        self.log.warning(f"No files downloaded for post ID: {post_id}")
+                        self.log.error(f"No files downloaded for post ID: {post_id}")
                         return None
 
                     for file in files:
@@ -337,7 +338,7 @@ class Misc(plugin.Plugin):
                         os.remove(filepath)
 
         except Exception as e:
-            self.log.exception(f"An error occurred: {str(e)}")
+            self.log.error(f"An error occurred: {str(e)}")
             return None
                 
     @listener.priority(95)
