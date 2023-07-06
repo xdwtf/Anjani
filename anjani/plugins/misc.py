@@ -115,9 +115,11 @@ class Misc(plugin.Plugin):
     @listener.priority(95)
     @listener.filters(~filters.outgoing)
     async def on_message(self, message: Message) -> None:
-        text = message.text
-    
-        if text is None:
+        if message.text is not None and isinstance(message.text, str):
+            text = message.text
+        elif message.caption is not None and isinstance(message.caption, str):
+            text = message.caption
+        else:
             return
 
         if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
