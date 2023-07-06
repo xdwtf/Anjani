@@ -275,71 +275,9 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-    @listener.priority(95)
-    @listener.filters(filters.regex(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)") & ~filters.outgoing)
+    @listener.filters(filters.private & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
-        """Threads Media Handler"""
-        self.log.info("bakatjrea")
-        chat = message.chat
-        ie = message.reply_to_message or message
-        text = message.text
-        tp = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
-        post_ids = re.findall(tp, text)
-        self.log.info(post_ids)
-        try:
-            # Find all post IDs matching the pattern
-            if post_ids:
-                self.log.info(post_ids)
-                return none
-
-            for post_id in post_ids:
-                async with httpx.AsyncClient() as http_client:
-                    response = await http_client.get("https://www.threads.net/")
-                    if response.status_code != 200:
-                        self.log.warning(f"Failed to fetch homepage: {response.status_code}")
-                        return None
-
-                    r = await http_client.get(f"https://www.threads.net/t/{post_id}/embed/")
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    medias = []
-
-                    if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
-                        if video := div.find("video"):
-                            url = video.find("source").get("src")
-                            medias.append({"p": url, "w": 0, "h": 0})
-                        if image := div.find("img", {"class": "img"}):
-                            url = image.get("src")
-                            medias.append({"p": url, "w": 0, "h": 0})
-
-                    if not medias:
-                        self.log.error(f"No media found for post ID: {post_id}")
-                        return None
-
-                    files = []
-                    for media in medias:
-                        response = await http_client.get(media["p"])
-                        file = io.BytesIO(response.content)
-                        file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                        files.append({"p": file, "w": media["w"], "h": media["h"]})
-
-                    if not files:
-                        self.log.error(f"No files downloaded for post ID: {post_id}")
-                        return None
-
-                    for file in files:
-                        filepath = f"{file['p'].name}"
-                        with open(filepath, 'wb') as f:
-                            f.write(file['p'].getbuffer())
-
-                        self.log.info(f"Sending document for post ID: {post_id}, file path: {filepath}")
-                        await self.bot.client.send_document(chat.id, document=filepath, caption=f"/t/{post_id}", reply_to_message_id=ie.id)
-
-                        # Remove the downloaded file
-                        os.remove(filepath)
-
-        except Exception as e:
-            self.log.error(f"An error occurred: {str(e)}")
-            return None
+        self.log.info("Received a reply message: %s", message.text)
                 
     @listener.priority(95)
     @listener.filters(filters.regex(platforms_regex) & ~filters.outgoing)
