@@ -289,7 +289,7 @@ class Misc(plugin.Plugin):
             return None
         
         for url in urls:
-            post_id_matches = re.findall(r"www.threads.net/t/([a-zA-Z0-9_-]+)", url)
+            post_id_matches = re.findall(r"https?://www\.threads\.net/t/([a-zA-Z0-9_-]+)", url)
             if not post_id_matches:
                 continue
 
