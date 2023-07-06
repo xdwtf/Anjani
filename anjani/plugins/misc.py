@@ -275,10 +275,6 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-    @listener.filters(filters.private & ~filters.outgoing)
-    async def on_message(self, message: Message) -> None:
-        self.log.info("Received a reply message: %s", message.text)
-                
     @listener.priority(95)
     @listener.filters(filters.regex(platforms_regex) & ~filters.outgoing)
     async def on_message(self, message: Message) -> None:
