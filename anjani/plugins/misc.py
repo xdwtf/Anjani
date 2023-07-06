@@ -288,8 +288,9 @@ class Misc(plugin.Plugin):
         
         try:
             # Find all post IDs matching the pattern
-            if not post_ids:
-                return None
+            if post_ids:
+                self.log.info(post_ids)
+                return none
 
             for post_id in post_ids:
                 async with httpx.AsyncClient() as http_client:
