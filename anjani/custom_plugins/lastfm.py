@@ -67,8 +67,10 @@ class LastfmPlugin(plugin.Plugin):
         is_playing = "@attr" in track and track["@attr"]["nowplaying"] == "true"
 
         if is_playing:
-            message = f"You are currently listening to:\n\nArtist: {artist}\nTrack: {title}"
+            message = f"You are currently listening to:\n\nTitle: {title}\nArtist: {artist}"
         else:
-            message = f"You recently listened to:\n\nArtist: {artist}\nTrack: {title}"
+            message = f"You recently listened to:\n\nTitle: {title}\nArtist: {artist}"
 
+        message += f"\nTotal Listens: {total_listens}"
+        
         await ctx.respond(message)
