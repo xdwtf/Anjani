@@ -38,12 +38,13 @@ class LastfmPlugin(plugin.Plugin):
         try:
             play_count = int(data["track"]["userplaycount"])
         except Exception as e:
-            self.log.info(f"An error occurred: {str(e)}")
+            self.log.info(f"An error occurred play_count: {str(e)}")
             play_count = 0
 
         try:
             user_loved = bool(int(data["track"]["userloved"]))
         except Exception as e:
+            self.log.info(f"An error occurred user_loved: {str(e)}")
             user_loved = False
 
         return play_count, user_loved
@@ -59,7 +60,7 @@ class LastfmPlugin(plugin.Plugin):
         await self.set_lastfm_username(ctx.msg.from_user.id, lastfm_username)
         await ctx.respond(f"Last.fm username has been set as: {lastfm_username}")
 
-    @command.filters(filters.private | filters.group | filters.regex(r"\bstatus\b", re.IGNORECASE))
+    @command.filters(filters.private | filters.group, aliases=["s"])
     async def cmd_status(self, ctx: command.Context) -> None:
         """Show the user's Last.fm status"""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
