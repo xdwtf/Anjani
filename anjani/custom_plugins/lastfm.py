@@ -12,7 +12,7 @@ from pyrogram.enums.parse_mode import ParseMode
 
 class LastfmPlugin(plugin.Plugin):
     name = "LAST FM"
-    helpable: ClassVar[bool] = False
+    helpable: ClassVar[bool] = True
 
     db: util.db.AsyncCollection
 
