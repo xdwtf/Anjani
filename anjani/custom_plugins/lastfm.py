@@ -74,13 +74,13 @@ class LastfmPlugin(plugin.Plugin):
         is_playing = "@attr" in track and track["@attr"]["nowplaying"] == "true"
 
         if is_playing:
-            message = f"You are currently listening to:\n\nTitle: {title}\nArtist: {artist}"
+            message = f"[{lastfm_username}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\nTitle: {title}\nArtist: {artist}"
         else:
-            message = f"You recently listened to:\n\nTitle: {title}\nArtist: {artist}"
+            message = f"[{lastfm_username}](tg://user?id={ctx.msg.from_user.id}) recently listened to:\n\nTitle: {title}\nArtist: {artist}"
 
         play_count = await self.track_playcount(lastfm_username, artist, title)
         message += f"\nPlay Count: {play_count}"
         
         message += f"\nTotal Listens: {total_listens}"
 
-        await ctx.respond(message)
+        await ctx.respond(message, parse_mode=ParseMode.MARKDOWN)
