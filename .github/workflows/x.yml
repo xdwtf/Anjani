@@ -33,4 +33,4 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags:  eyamika/eyamika:${{ env.DATEX }}
+          tags:  eyamika/eyamika:latest
