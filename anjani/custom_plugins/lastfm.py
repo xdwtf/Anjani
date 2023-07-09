@@ -49,7 +49,7 @@ class LastfmPlugin(plugin.Plugin):
         await ctx.respond(f"Last.fm username has been set as: {lastfm_username}")
 
     @command.filters((filters.private | filters.group) & filters.create(lambda cmd: cmd.text.lower() == "/status" or "status" in cmd.text.lower()))
-    async def cmd_status(self, ctx: command.Context) -> None:
+    async def cmd_status(self, ctx: command.Context, *args, **kwargs) -> None:
         """Show the user's Last.fm status"""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
 
