@@ -83,4 +83,4 @@ class LastfmPlugin(plugin.Plugin):
         
         message += f"\n📈 Total Listens: {total_listens}"
 
-        await ctx.respond(message, parse_mode=ParseMode.MARKDOWN)
+        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
