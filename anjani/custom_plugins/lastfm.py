@@ -18,6 +18,8 @@ class LastfmPlugin(plugin.Plugin):
 
     async def on_load(self) -> None:
         self.db = self.bot.db.get_collection("LASTFM")
+        self.register_command(self.cmd_setusername)
+        self.register_command(self.cmd_status, name="status")
 
     async def get_data(self, key: str, value: Any) -> Optional[MutableMapping[str, Any]]:
         return await self.db.find_one({key: value})
