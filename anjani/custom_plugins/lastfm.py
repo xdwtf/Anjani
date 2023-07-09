@@ -64,6 +64,7 @@ class LastfmPlugin(plugin.Plugin):
         track = data["recenttracks"]["track"][0]
         artist = track["artist"]["#text"]
         title = track["name"]
+        total_listens = int(data["recenttracks"]["@attr"]["total"])
         is_playing = "@attr" in track and track["@attr"]["nowplaying"] == "true"
 
         if is_playing:
