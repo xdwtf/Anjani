@@ -40,8 +40,13 @@ class LastfmPlugin(plugin.Plugin):
         except Exception as e:
             self.log.info(f"An error occurred: {str(e)}")
             play_count = 0
-        
-        return play_count
+
+        try:
+            user_loved = bool(int(data["track"]["userloved"]))
+        except Exception as e:
+            user_loved = False
+
+        return play_count, user_loved
     
     @command.filters(filters.private)
     async def cmd_setusername(self, ctx: command.Context) -> None:
@@ -84,7 +89,11 @@ class LastfmPlugin(plugin.Plugin):
         else:
             message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) recently listened to:\n\n🎵 Title: [{title}](https://open.spotify.com/search/{urllib.parse.quote(title)}%20{urllib.parse.quote(artist)})\n🎙 Artist: {artist}"
 
-        play_count = await self.track_playcount(lastfm_username, artist, title)
+        play_count, user_loved = await self.track_playcount(lastfm_username, artist, title)
+
+        if user_loved:
+            message += f"\n💖 Loved"
+
         if play_count > 0:
             message += f"\n🎧 Play Count: {play_count}"
         
