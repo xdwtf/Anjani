@@ -84,8 +84,8 @@ class LastfmPlugin(plugin.Plugin):
         else:
             message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) recently listened to:\n\n🎵 Title: [{title}](https://open.spotify.com/search/{urllib.parse.quote(title)}%20{urllib.parse.quote(artist)})\n🎙 Artist: {artist}"
 
+        play_count = await self.track_playcount(lastfm_username, artist, title)
         if play_count > 0:
-            play_count = await self.track_playcount(lastfm_username, artist, title)
             message += f"\n🎧 Play Count: {play_count}"
         
         message += f"\n📈 Total Listens: {total_listens}"
