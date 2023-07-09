@@ -1,5 +1,5 @@
 """ last.fm Plugin """
-import json, requests
+import json, requests, urllib.parse
 
 from typing import Any, ClassVar, Mapping, MutableMapping, Optional
 
@@ -31,6 +31,12 @@ class LastfmPlugin(plugin.Plugin):
             return data["lastfm_username"]
         return None
 
+    async def track_playcount(self, username: str, artist: str, title: str) -> int:
+        url = f"https://ws.audioscrobbler.com/2.0/?method=track.getinfo&user={username}&artist={urllib.parse.quote(artist)}&track={urllib.parse.quote(title)}&api_key={self.bot.config.LASTFM_API_KEY}&format=json"
+        response = requests.get(url)
+        data = json.loads(response.text)
+        return int(data["track"]["userplaycount"])
+    
     #@command.filters(filters.private & filters.group)
     async def cmd_setusername(self, ctx: command.Context) -> None:
         """Set the user's Last.fm username"""
@@ -53,7 +59,7 @@ class LastfmPlugin(plugin.Plugin):
 
         lastfm_api_key = self.bot.config.LASTFM_API_KEY
 
-        url = f"http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={lastfm_username}&api_key={lastfm_api_key}&format=json&limit=1"
+        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={lastfm_username}&api_key={lastfm_api_key}&format=json&limit=1"
         response = requests.get(url)
         data = json.loads(response.text)
 
@@ -72,6 +78,9 @@ class LastfmPlugin(plugin.Plugin):
         else:
             message = f"You recently listened to:\n\nTitle: {title}\nArtist: {artist}"
 
-        message += f"\nTotal Listens: {total_listens}"
+        play_count = await self.track_playcount(lastfm_username, artist, title)
+        message += f"\nPlay Count: {play_count}"
         
+        message += f"\nTotal Listens: {total_listens}"
+
         await ctx.respond(message)
