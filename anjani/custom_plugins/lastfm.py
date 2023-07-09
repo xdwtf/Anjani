@@ -74,9 +74,9 @@ class LastfmPlugin(plugin.Plugin):
         is_playing = "@attr" in track and track["@attr"]["nowplaying"] == "true"
 
         if is_playing:
-            message = f"[{lastfm_username}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\n🎵 Title: {title}\n🎙 Artist: {artist}"
+            message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\n🎵 Title: [{title}](https://open.spotify.com/search/{urllib.parse.quote(title)}%20{urllib.parse.quote(artist)})\n🎙 Artist: {artist}"
         else:
-            message = f"[{lastfm_username}](tg://user?id={ctx.msg.from_user.id}) recently listened to:\n\n🎵 Title: {title}\n🎙 Artist: {artist}"
+            message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) recently listened to:\n\n🎵 Title: [{title}](https://open.spotify.com/search/{urllib.parse.quote(title)}%20{urllib.parse.quote(artist)})\n🎙 Artist: {artist}"
 
         play_count = await self.track_playcount(lastfm_username, artist, title)
         message += f"\n🎧 Play Count: {play_count}"
