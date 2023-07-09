@@ -35,7 +35,13 @@ class LastfmPlugin(plugin.Plugin):
         url = f"https://ws.audioscrobbler.com/2.0/?method=track.getinfo&user={username}&artist={urllib.parse.quote(artist)}&track={urllib.parse.quote(title)}&api_key={self.bot.config.LASTFM_API_KEY}&format=json"
         response = requests.get(url)
         data = json.loads(response.text)
-        return int(data["track"]["userplaycount"])
+        try:
+            play_count = int(data["track"]["userplaycount"])
+        except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
+            play_count = 0
+        
+        return play_count
     
     @command.filters(filters.private)
     async def cmd_setusername(self, ctx: command.Context) -> None:
