@@ -11,7 +11,7 @@ from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
 
 class LastfmPlugin(plugin.Plugin):
-    name = "LAST FM"
+    name = "LASTFM"
     helpable: ClassVar[bool] = True
 
     db: util.db.AsyncCollection
