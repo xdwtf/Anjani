@@ -31,7 +31,7 @@ class LastfmPlugin(plugin.Plugin):
             return data["lastfm_username"]
         return None
 
-    @command.filters(filters.owner_only)
+    @command.filters(filters.private & ~filters.outgoing)
     async def cmd_setusername(self, ctx: command.Context) -> None:
         """Set the user's Last.fm username"""
         if len(ctx.args) < 1:
@@ -42,13 +42,13 @@ class LastfmPlugin(plugin.Plugin):
         await self.set_lastfm_username(ctx.msg.from_user.id, lastfm_username)
         await ctx.respond(f"Last.fm username has been set as: {lastfm_username}")
 
-    @command.filters(filters.owner_only)
+    @command.filters(filters.private & filters.group & ~filters.outgoing)
     async def cmd_status(self, ctx: command.Context) -> None:
         """Show the user's Last.fm status"""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
 
         if not lastfm_username:
-            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername.")
+            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
             return
 
         lastfm_api_key = self.bot.config.LASTFM_API_KEY
