@@ -1,5 +1,5 @@
 """ last.fm Plugin """
-import json, requests, urllib.parse
+import json, requests, urllib.parse, re
 
 from typing import Any, ClassVar, Mapping, MutableMapping, Optional
 
@@ -48,7 +48,7 @@ class LastfmPlugin(plugin.Plugin):
         await self.set_lastfm_username(ctx.msg.from_user.id, lastfm_username)
         await ctx.respond(f"Last.fm username has been set as: {lastfm_username}")
 
-    @command.filters(filters.private | filters.group | filters.regex(r"\bstatus\b"))
+    @command.filters(filters.private | filters.group | filters.regex(r"\bstatus\b", re.IGNORECASE))
     async def cmd_status(self, ctx: command.Context) -> None:
         """Show the user's Last.fm status"""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
