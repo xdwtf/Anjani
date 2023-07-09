@@ -1,7 +1,7 @@
 """ last.fm Plugin """
 import json, requests
 
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Mapping, MutableMapping, Optional
 
 from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
