@@ -642,7 +642,7 @@ anime-help: |
   × `/anilist trending` : Get Trendings
 #endregion
 #region LAST FM
-lastfm-button: LAST FM
+lastfm-button: LASTFM
 lastfm-help: |
   A Last.fm Plugin
   **Commands**
