@@ -21,7 +21,7 @@ from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
 
 from anjani import command, filters, listener, plugin
-from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
+from pyrogram.types import Message
 from pyrogram.enums.parse_mode import ParseMode
 
 import re, json, random, requests, os, io, filetype, httpx
@@ -221,14 +221,6 @@ class Misc(plugin.Plugin):
                 soup = BeautifulSoup(response_embed.text, "html.parser")
                 medias = []
 
-                if find_all := soup.find_all("div", class_="MediaScrollImageContainer"):
-                    for div in find_all:
-                        if video := div.find("video"):
-                            url = video.find("source").get("src")
-                            medias.append({"p": url, "type": "video"})
-                        elif image := div.find("img", class_="img"):
-                            url = image.get("src")
-                            medias.append({"p": url, "type": "image"})
                 if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
                     if video := div.find("video"):
                         url = video.find("source").get("src")
@@ -251,41 +243,24 @@ class Misc(plugin.Plugin):
                 if not files:
                     self.log.info(f"no FILES found for {xd[0]}")
                     return None
-                
-                if len(files) > 1:
-                    # Grouped media
-                    media_group = []
-                    for file in files:
-                        media_type = file["type"]
-                        if media_type == "video":
-                            media_group.append(InputMediaVideo(file["p"], caption=TURL))
-                        elif media_type == "image":
-                            media_group.append(InputMediaPhoto(file["p"], caption=TURL))
-                    # Send the grouped media
-                    try:
-                        await userge.send_media_group(chat_id=uname, media=media_group)
-                    except Exception as e:
-                        print(f"Failed to send media group. Error: {e}")
-                elif len(files) == 1:
-                    # Single media
-                    file = files[0]
+
+                for file in files:
                     filepath = f"{file['p'].name}"
                     with open(filepath, 'wb') as f:
                         f.write(file['p'].getbuffer())
-                    
-                    try:
-                        if file["type"] == "video":
-                            await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                        elif file["type"] == "image":
-                            await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                        else:
-                            await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                    except Exception as e:
-                        self.log.info(f"An error occurred: {str(e)}")
-                        return None
-                    os.remove(filepath)
+
+                if file["type"] == "video":
+                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                elif file["type"] == "image":
+                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
                 else:
-                    return None
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                    # Remove the downloaded file
+                    os.remove(filepath)
+
+        except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
+            return None
 
     @command.filters(filters.private)
     async def cmd_paste(self, ctx: command.Context, service: Optional[str] = None) -> Optional[str]:
