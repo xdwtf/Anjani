@@ -641,3 +641,11 @@ anime-help: |
   × `/anilist upcoming` : Get Upcomings
   × `/anilist trending` : Get Trendings
 #endregion
+#region LAST FM
+lastfm-button: LAST FM
+lastfm-help: |
+  A Last.fm Plugin
+  **Commands**
+  × `/status` : your scrobbling Last.fm
+  × `/setusername` : your Last.fm username
+#endregion
