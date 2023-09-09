@@ -1,5 +1,6 @@
 """ last.fm Plugin """
 import json, requests, urllib.parse, re
+from datetime import datetime
 
 from typing import Any, ClassVar, Mapping, MutableMapping, Optional
 
@@ -60,6 +61,30 @@ class LastfmPlugin(plugin.Plugin):
         await self.set_lastfm_username(ctx.msg.from_user.id, lastfm_username)
         await ctx.respond(f"Last.fm username has been set as: {lastfm_username}")
 
+    @command.filters(filters.private)
+    async def cmd_flex(self, ctx: command.Context) -> None:
+        """Show the user's Last.fm flx"""
+        lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+
+        if not lastfm_username:
+            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
+            return
+
+        lastfm_api_key = self.bot.config.LASTFM_API_KEY
+
+        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user={lastfm_username}&api_key={lastfm_api_key}&format=json"
+        response = requests.get(url)
+        data = json.loads(response.text)
+
+        if "error" in data:
+            await ctx.respond("An error occurred while retrieving Last.fm data. Please try again later.")
+            return
+
+        name = data['user']['name']
+        url = data['user']['url']
+        playcount = data['user']['playcount']
+        registered_unixtime = int(data['user']['registered']['unixtime'])
+    
     @command.filters(filters.private | filters.group, aliases=["s"])
     async def cmd_status(self, ctx: command.Context) -> None:
         """Show the user's Last.fm status"""
