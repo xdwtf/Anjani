@@ -26,11 +26,6 @@ RUN poetry install --no-root --only main -E uvloop
 
 RUN apt-get -qq install -y --no-install-recommends git
 
-ARG USERBOTINDO_ACCESS_TOKEN
-COPY ./preinstall.sh ./
-RUN chmod +x ./preinstall.sh
-RUN ./preinstall.sh && rm -rf $POETRY_CACHE_DIR
-
 
 FROM base as runner
 WORKDIR /app
@@ -42,4 +37,8 @@ COPY --from=builder $VENV_PATH $VENV_PATH
 
 COPY . .
 
-CMD ["python", "-m", "anjani"]
+# Expose port 8080 for the Flask app
+EXPOSE 8080
+
+# Start both bot and Flask app
+CMD [ "bash", "x.sh" ]
