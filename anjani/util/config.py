@@ -46,6 +46,8 @@ class Config:
         self.SW_API = getenv("SW_API")
 
         self.LOGIN_URL = getenv("LOGIN_URL")
+        self.RAPIDAPI_KEY = getenv("RAPIDAPI_KEY")
+        self.LASTFM_API_KEY = getenv("LASTFM_API_KEY")
         self.PLUGIN_FLAG = list(
             filter(None, [i.strip() for i in getenv("PLUGIN_FLAG", "").split(";")])
         )
