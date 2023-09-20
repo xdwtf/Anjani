@@ -20,8 +20,35 @@ from typing import Any, ClassVar, Optional
 from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
 
-from anjani import command, filters, plugin
+from anjani import command, filters, listener, plugin
+from pyrogram.types import Message
+from pyrogram.enums.parse_mode import ParseMode
 
+import re, json, random, requests, os, io, filetype, httpx
+from bs4 import BeautifulSoup
+
+platforms_regex = re.compile(r'('
+    r'https?://open\.spotify\.com/(?:album|track|playlist)/[a-zA-Z0-9]+(?:/.*)?|'
+    r'https?://itunes\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
+    r'https?://music\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)?|'
+    r'https?://music\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
+    r'https?://www\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
+    r'https?://www\.google\.com/search\?.*&(?:source=lnms&tbm=isch&q=)?spotify\+[^&]*(?:&[^&]*)*|'
+    r'https?://play\.google\.com/store/music/album/[^/?#]+/[^/?#]+|'
+    r'https?://www\.pandora\.com/artist/[^/?#]+/[^/?#]+|'
+    r'https?://www\.deezer\.com/(?:album|track|playlist)/[0-9]+|'
+    r'https?://listen\.tidal\.com/(?:album|track|playlist)/[0-9]+|'
+    r'https?://www\.amazon\.(?:com|co\.uk|de|fr|ca)/gp/product/[^/?#]+|'
+    r'https?://music\.amazon\.(?:com|co\.uk|de|fr|ca)/(?:albums|artists|playlists)/[^/?#]+|'
+    r'https?://soundcloud\.com/(?:[^/?#]+/)?[^/?#]+|'
+    r'https?://us\.napster\.com/(?:artist|album|track)/[^/?#]+|'
+    r'https?://music\.yandex\.ru/(?:album|track|playlist)/[0-9]+|'
+    r'https?://spinrilla\.com/songs/[^/?#]+|'
+    r'https?://audius\.co/(?:artist|track|playlist)/[^/?#]+|'
+    r'https?://(?:www\.)?anghami\.com/.*|'
+    r'https?://(?:www\.)?boomplay\.com/songs/[0-9]+|'
+    r'https?://audiomack\.com/[^/?#]+/song/[^/?#]+'
+    r')')
 
 class Paste:
     def __init__(self, session: ClientSession, name: str, url: str):
@@ -85,6 +112,157 @@ class Misc(plugin.Plugin):
 
         return out_str
 
+    @listener.priority(95)
+    @listener.filters(~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        if message.text is not None and isinstance(message.text, str):
+            text = message.text
+        elif message.caption is not None and isinstance(message.caption, str):
+            text = message.caption
+        else:
+            return
+
+        if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
+            # Instagram Reel
+            await self.handle_instagram_reel(message)
+        elif re.match(platforms_regex, text):
+            # Music Links
+            await self.handle_music_links(message)
+        elif re.match(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)", text):
+            # Threads Handler
+            await self.handle_threads(message)
+
+    async def handle_instagram_reel(self, message: Message) -> None:
+        """Handle Instagram Reel"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/"
+        xd = re.findall(Pattern, message.text)
+        url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
+        querystring = {"url": xd[0]}
+        headers = {
+            "X-RapidAPI-Key": self.bot.config.RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com",
+        }
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        reel= json.loads(response.text)
+        self.log.info(f"Received message: {xd[0]}")
+        try:
+            await self.bot.client.send_video(
+            chat.id,
+            reel["media"],
+            reply_to_message_id=ie.id,
+        )
+        except Exception as e:
+            return None
+
+    async def handle_music_links(self, message: Message) -> None:
+        """Listen Music Links"""
+        chat = message.chat
+        userx = message.from_user
+        ie = message.reply_to_message or message
+        xd = platforms_regex.findall(message.text)
+
+        try:
+            if xd:
+                urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
+                response = requests.request("GET", urlx)
+                data = response.json()
+                entities = data.get("entitiesByUniqueId", {})
+                song_entity = next(iter(entities.values()))
+                artist_name = song_entity.get("artistName")
+                title = song_entity.get("title")
+                links_by_platform = data.get("linksByPlatform", {})
+                pu = data.get("pageUrl")
+                platforms = []
+                urls = []
+                for platform, platform_data in links_by_platform.items():
+                    url = platform_data.get("url")
+                    cw = platform.title()
+                    platforms.append(f"[{cw}]({url})")
+
+                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
+                link_text = " | ".join(platforms)
+                li = f'\n\n[View on Odesli]({pu})'
+                nt = um + link_text + li
+                await self.bot.client.send_message(
+                    chat.id,
+                    text=nt,
+                    reply_to_message_id=ie.id,
+                    parse_mode=ParseMode.MARKDOWN,
+                    disable_web_page_preview=True,
+                )
+            else:
+                self.log.info(f"music else part")
+                return None
+        except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
+            return None
+
+    async def handle_threads(self, message: Message) -> None:
+        """Threads Handler"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
+        xd = re.findall(Pattern, message.text)
+        self.log.info(f"Received message: {xd[0]}")
+        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
+        
+        try:
+            async with httpx.AsyncClient() as http_client:
+                response_homepage = await http_client.get("https://www.threads.net/")
+                if response_homepage.status_code != 200:
+                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
+                    return None
+                
+                self.log.info(f"Received message: {xd[0]}")
+            
+                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
+                soup = BeautifulSoup(response_embed.text, "html.parser")
+                medias = []
+
+                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
+                    if video := div.find("video"):
+                        url = video.find("source").get("src")
+                        medias.append({"p": url, "type": "video"})
+                    elif image := div.find("img", {"class": "img"}):
+                        url = image.get("src")
+                        medias.append({"p": url, "type": "image"})
+
+                if not medias:
+                    self.log.info(f"no media found for {xd[0]}")
+                    return None
+
+                files = []
+                for media in medias:
+                    response_media = await http_client.get(media["p"])
+                    file = io.BytesIO(response_media.content)
+                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
+                    files.append({"p": file, "type": media["type"]})
+
+                if not files:
+                    self.log.info(f"no FILES found for {xd[0]}")
+                    return None
+
+                for file in files:
+                    filepath = f"{file['p'].name}"
+                    with open(filepath, 'wb') as f:
+                        f.write(file['p'].getbuffer())
+
+                if file["type"] == "video":
+                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                elif file["type"] == "image":
+                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                else:
+                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
+                    # Remove the downloaded file
+                    os.remove(filepath)
+
+        except Exception as e:
+            self.log.info(f"An error occurred: {str(e)}")
+            return None
+
+    @command.filters(filters.private)
     async def cmd_paste(self, ctx: command.Context, service: Optional[str] = None) -> Optional[str]:
         if not ctx.msg.reply_to_message:
             return None
@@ -96,7 +274,7 @@ class Misc(plugin.Plugin):
         reply_msg = ctx.msg.reply_to_message
 
         data: Any
-        if reply_msg.document:
+        if (reply_msg.document and reply_msg.document.file_size < 10000000):
             file = AsyncPath(await reply_msg.download())
             data = await file.read_text()
             await file.unlink()
@@ -149,6 +327,20 @@ class Misc(plugin.Plugin):
             disable_web_page_preview=True,
         )
 
+    @command.filters(filters.admin_only)
+    async def cmd_echo(self, ctx: command.Context) -> str:
+        """Panda to Echo."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_message(
+            chat.id,
+            text,
+            reply_to_message_id=msg.id,
+        )
+        await ctx.msg.delete()
+        return None
+
     @command.filters(filters.group)
     async def cmd_slap(self, ctx: command.Context) -> Optional[str]:
         """Slap member with neko slap."""
@@ -167,3 +359,42 @@ class Misc(plugin.Plugin):
             caption=text,
         )
         return None
+
+    @command.filters(filters.group)
+    async def cmd_pat(self, ctx: command.Context) -> Optional[str]:
+        """Pat member with neko pat."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        async with self.bot.http.get("https://www.nekos.life/api/v2/img/pat") as pat:
+            if pat.status != 200:
+                return await self.text(chat.id, "err-api-down")
+            res = await pat.json()
+
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_animation(
+            chat.id,
+            res["url"],
+            reply_to_message_id=msg.id,
+            caption=text,
+        )
+        return None
+
+    async def cmd_ud(self, ctx: command.Context) -> Optional[str]:
+        """urban dictionary"""
+        tex = ctx.input.split()[-1]
+        chat = ctx.msg.chat
+        ud = f'http://api.urbandictionary.com/v0/define?term={tex}'
+        res = requests.get(ud)
+        ret = json.loads(res.text)
+        try:
+            word = ret["list"][0]["word"]
+            definition = ret["list"][0]["definition"]
+            example = ret["list"][0]["example"]
+            y = f"Text: {word}\n\nMeaning: {definition}\n\nExample: {example}"
+            await self.bot.client.send_message(
+            chat.id,
+            text=y,
+            reply_to_message_id=ctx.msg.id,
+        )
+        except Exception as e:
+            return None
