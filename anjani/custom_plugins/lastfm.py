@@ -87,7 +87,7 @@ class LastfmPlugin(plugin.Plugin):
         albumcount = data['user']['album_count']
         registered_unixtime = int(data['user']['registered']['unixtime'])
         dt = datetime.datetime.fromtimestamp(registered_unixtime)
-        message = f"[{name}]({url}) LastFM:\nListens: {playcount}\nartists: {artistcount}n\tracks: {trackcount}n\albums: {albumcount}\n since:{dt}"
+        message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n\nListens: {playcount}\nArtists: {artistcount}\nTracks: {trackcount}\nAlbums: {albumcount}\n\nSince:{dt}"
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
     
     @command.filters(filters.private | filters.group, aliases=["s"])
