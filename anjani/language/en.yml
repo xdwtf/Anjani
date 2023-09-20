@@ -2,9 +2,9 @@
 start-pm: |
   Hey there! my name is **{}**.
   Any questions on how to use me? use /help
-  Join Our [Group](https://t.me/userbotindo) If You wanna Report Issue 🙂
+  Join Our [Channel](https://t.me/Nexiuo) If You wanna Report Issue
   I'm here to make your group management fun and easy!
-  **Managed With ❤️ By :** [UserbotIndo Team](https://t.me/userbotindo)
+  **Managed With ❤️ By :** [Nexiuo](https://t.me/Nexiuo)
   Wanna Add me to your Group? Just click the button below!
 help-pm: |
   Hello there! My name is **{}**.
@@ -27,8 +27,7 @@ dashboard-button: Dashboard
 back-button: ⬅️ Back
 donate: |
   Hi, glad to see you want to donate!
-  You can donate to us on [our site](https://userbotindo.com/donate?ref=anjani).
-  Our team is fully handled by volunteers,, and every little helps to improve our services.
+  My owner is not accepting donations currently.
   Thank you for your support!
 markdown-helper: |
   Markdown is a very powerful formatting tool supported by telegram. {} has some enhancements, to make sure that saved messages are correctly parsed, and to allow you to create buttons.\n
@@ -656,4 +655,23 @@ err-unexpected: "An unexpected error occurred.! \n\n**Error:** `{}`"
 err-msg-format-parsing: "**Message format parsing error!**\n**Error on:** `{err}`."
 err-im-not-admin: "I'm not an admin here! I need to be an admin to do this."
 err-illegal-trigger: "Illegal character in trigger!\n'.' and '$' are not allowed"
+#endregion
+#region Anime
+anime-button: Anime
+anime-help: |
+  An Anilist Plugin
+  **Commands:**
+  × `/anilist <name>` : Search Anime name
+  × `/anilist airing` : Get Airings
+  × `/anilist upcoming` : Get Upcomings
+  × `/anilist trending` : Get Trendings
+#endregion
+#region LAST FM
+lastfm-button: LASTFM
+lastfm-help: |
+  A Last.fm Plugin
+  **Commands**
+  × `/status` : your scrobbling Last.fm
+  × `/setusername` : your Last.fm username
+  × `/flex` : Flex Last.fm
 #endregion
