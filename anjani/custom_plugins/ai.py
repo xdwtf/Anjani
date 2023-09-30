@@ -12,6 +12,7 @@ from pyrogram.enums.parse_mode import ParseMode
 
 def ask(model, inputs):
     input = { "messages": inputs }
+    API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
     response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
     print(response.json())
     return response.json()
