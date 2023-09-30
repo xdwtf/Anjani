@@ -12,7 +12,7 @@ from pyrogram.enums.parse_mode import ParseMode
 
 class aiPlugin(plugin.Plugin):
     name = "AI"
-    helpable: ClassVar[bool] = false #True
+    helpable: ClassVar[bool] = False #True
 
     db: util.db.AsyncCollection
 
