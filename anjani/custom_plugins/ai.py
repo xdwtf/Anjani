@@ -70,7 +70,7 @@ class aiPlugin(plugin.Plugin):
         API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
         headers = {"Authorization": "Bearer {api_token}"}
         response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
-        output = await response.json()
+        output = response.json()
         if 'result' in output and 'response' in output['result']:
             aimessage = output['result']['response']
             await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
