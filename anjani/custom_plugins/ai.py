@@ -10,9 +10,10 @@ from anjani import command, filters, listener, plugin, util
 from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
 
-def ask(model, inputs):
+def ask(account_id, api_token, model, inputs):
     input = { "messages": inputs }
     API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
+    headers = {"Authorization": "Bearer {api_token}"}
     response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
     print(response.json())
     return response.json()
@@ -39,7 +40,7 @@ class aiPlugin(plugin.Plugin):
             print(data["account_id"])
             print(data["api_token"])
             return data["account_id"], data["api_token"]
-        return None
+        return None, None
 
     @command.filters(filters.private)
     async def cmd_setai(self, ctx: command.Context) -> None:
@@ -65,17 +66,15 @@ class aiPlugin(plugin.Plugin):
             return
         print(await self.get_info(ctx.msg.from_user.id))
         account_id, api_token = await self.get_info(ctx.msg.from_user.id)
-        if not account_id:
+        if account_id is None:
             await ctx.respond("AI info not found. Please set your AI infousing /setai in PM")
             return
-        API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
-        headers = {"Authorization": "Bearer {api_token}"}
         inputs = [
             { "role": "system", "content": "You are a friendly assistant" },
             { "role": "user", "content": ctx.input}
         ];
         print(inputs)
-        output = ask("@cf/meta/llama-2-7b-chat-int8", inputs)
+        output = ask(account_id, api_token, "@cf/meta/llama-2-7b-chat-int8", inputs)
         if 'result' in output and 'response' in output['result']:
             aimessage = output['result']['response']
             await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
