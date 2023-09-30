@@ -10,14 +10,6 @@ from anjani import command, filters, listener, plugin, util
 from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
 
-def ask(account_id, api_token, model, inputs):
-    input = { "messages": inputs }
-    API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
-    headers = {"Authorization": "Bearer {api_token}"}
-    response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
-    print(response.json())
-    return response.json()
-
 class aiPlugin(plugin.Plugin):
     name = "AI"
     helpable: ClassVar[bool] = False #True
@@ -42,6 +34,15 @@ class aiPlugin(plugin.Plugin):
             return data['account_id'], data['api_token']
         return None
 
+    async def ask(account_id, api_token, model, inputs):
+        input = { "messages": inputs }
+        API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
+        headers = {"Authorization": "Bearer {api_token}"}
+        response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
+        print(await response.json())
+        return await response.json()
+
+    
     @command.filters(filters.private)
     async def cmd_setai(self, ctx: command.Context) -> None:
         """Set the user's AI info"""
