@@ -34,6 +34,12 @@ class aiPlugin(plugin.Plugin):
             return data["account_id"], data["api_token"]
         return None
 
+    async def ask(model, inputs):
+            input = { "messages": inputs }
+            response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
+            print(response.json())
+            return response.json()
+
     @command.filters(filters.private)
     async def cmd_setai(self, ctx: command.Context) -> None:
         """Set the user's AI info"""
@@ -52,36 +58,23 @@ class aiPlugin(plugin.Plugin):
         print(ctx.input)
         if not ctx.input:
             return "Give me a message to send."
-
         if len(ctx.input) > 768:
             await ctx.respond("Please note that there is a 768 character limit for the replied message.")
             print("this return")
             return
-
         print(await self.get_info(ctx.msg.from_user.id))
-        
         account_id, api_token = await self.get_info(ctx.msg.from_user.id)
-        
         if not account_id:
             await ctx.respond("AI info not found. Please set your AI infousing /setai in PM")
             return
-
         API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
         headers = {"Authorization": "Bearer {api_token}"}
-        
-        def ask(model, inputs):
-            input = { "messages": inputs }
-            response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
-            print(response.json())
-            return response.json()
-        
         inputs = [
             { "role": "system", "content": "You are a friendly assistant" },
             { "role": "user", "content": ctx.input}
         ];
         print(inputs)
         output = ask("@cf/meta/llama-2-7b-chat-int8", inputs)
-
         if 'result' in output and 'response' in output['result']:
             aimessage = output['result']['response']
             await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
