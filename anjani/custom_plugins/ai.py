@@ -27,7 +27,9 @@ class aiPlugin(plugin.Plugin):
     
     async def get_info(self, user_id: int) -> Optional[str]:
         data = await self.get_data("user_id", user_id)
-        if data and "account_id" in data and "api_token" in data:
+        if data and "api_token" in data:
+            print(data["account_id"])
+            print(data["api_token"])
             return data["account_id"], data["api_token"]
         return None
 
@@ -46,19 +48,19 @@ class aiPlugin(plugin.Plugin):
     @command.filters(filters.private | filters.group)
     async def cmd_ai(self, ctx: command.Context) -> None:
         """WORKER AI API CALL"""
-        if ctx.msg.reply_to_message:
-            if ctx.msg.reply_to_message.text:
-                intext = ctx.msg.reply_to_message.text
-                print(intext)
-                if len(intext) > 768:
-                    await ctx.respond("Please note that there is a 768 character limit for the replied message.")
-                    print("this return")
-                    return
-        else:
-            await ctx.respond("Reply to Question text")
+        if not ctx.input:
+            return "Give me a message to send."
+
+        print(ctx.input)
+        if len(ctx.input) > 768:
+            await ctx.respond("Please note that there is a 768 character limit for the replied message.")
+            print("this return")
             return
 
+        print(await self.get_info(ctx.msg.from_user.id))
+        
         account_id, api_token = await self.get_info(ctx.msg.from_user.id)
+        
         if not account_id:
             await ctx.respond("AI info not found. Please set your AI infousing /setai in PM")
             return
@@ -74,8 +76,9 @@ class aiPlugin(plugin.Plugin):
         
         inputs = [
             { "role": "system", "content": "You are a friendly assistant" },
-            { "role": "user", "content": intext}
+            { "role": "user", "content": ctx.input}
         ];
+        print(inputs)
         output = ask("@cf/meta/llama-2-7b-chat-int8", inputs)
         print(output)
         aimessage = output['result']['response']
