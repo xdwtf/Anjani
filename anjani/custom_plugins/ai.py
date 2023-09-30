@@ -49,10 +49,10 @@ class aiPlugin(plugin.Plugin):
     @command.filters(filters.private | filters.group)
     async def cmd_ai(self, ctx: command.Context) -> None:
         """WORKER AI API CALL"""
+        print(ctx.input)
         if not ctx.input:
             return "Give me a message to send."
 
-        print(ctx.input)
         if len(ctx.input) > 768:
             await ctx.respond("Please note that there is a 768 character limit for the replied message.")
             print("this return")
@@ -81,6 +81,9 @@ class aiPlugin(plugin.Plugin):
         ];
         print(inputs)
         output = ask("@cf/meta/llama-2-7b-chat-int8", inputs)
-        print(output)
-        aimessage = output['result']['response']
-        await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+
+        if 'result' in output and 'response' in output['result']:
+            aimessage = output['result']['response']
+            await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        else:
+            await ctx.respond("Failed to retrieve AI response.")
