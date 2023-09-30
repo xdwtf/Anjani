@@ -68,7 +68,7 @@ class aiPlugin(plugin.Plugin):
         input = { "messages": inputs }
         model = "@cf/meta/llama-2-7b-chat-int8" 
         API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
-        headers = {"Authorization": "Bearer {api_token}"}
+        headers = {"Authorization": f"Bearer {api_token}"}
         response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
         output = response.json()
         if 'result' in output and 'response' in output['result']:
