@@ -55,10 +55,11 @@ class aiPlugin(plugin.Plugin):
             print("this return")
             return
         print(await self.get_info(ctx.msg.from_user.id))
-        account_id, api_token = await self.get_info(ctx.msg.from_user.id)
-        if account_id is None:
+        account_info = await self.get_info(ctx.msg.from_user.id)
+        if account_info is None:
             await ctx.respond("AI info not found. Please set your AI info using /setai in PM")
             return
+        account_id, api_token = account_info
         inputs = [
             { "role": "system", "content": "You are a friendly assistant" },
             { "role": "user", "content": ctx.input}
