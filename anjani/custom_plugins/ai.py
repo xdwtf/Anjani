@@ -33,15 +33,6 @@ class aiPlugin(plugin.Plugin):
             print(data['api_token'])
             return data['account_id'], data['api_token']
         return None
-
-    async def ask(account_id, api_token, model, inputs):
-        input = { "messages": inputs }
-        API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
-        headers = {"Authorization": "Bearer {api_token}"}
-        response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
-        print(await response.json())
-        return await response.json()
-
     
     @command.filters(filters.private)
     async def cmd_setai(self, ctx: command.Context) -> None:
@@ -74,8 +65,12 @@ class aiPlugin(plugin.Plugin):
             { "role": "system", "content": "You are a friendly assistant" },
             { "role": "user", "content": ctx.input}
         ];
-        print(inputs)
-        output = ask(account_id, api_token, "@cf/meta/llama-2-7b-chat-int8", inputs)
+        input = { "messages": inputs }
+        model = "@cf/meta/llama-2-7b-chat-int8" 
+        API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
+        headers = {"Authorization": "Bearer {api_token}"}
+        response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
+        output = await response.json()
         if 'result' in output and 'response' in output['result']:
             aimessage = output['result']['response']
             await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
