@@ -49,6 +49,7 @@ class aiPlugin(plugin.Plugin):
         if ctx.msg.reply_to_message:
             if ctx.msg.reply_to_message.text:
                 intext = ctx.msg.reply_to_message.text
+                print(intext)
                 if len(intext) > 768:
                     await ctx.respond("Please note that there is a 768 character limit for the replied message.")
                     return
@@ -74,5 +75,6 @@ class aiPlugin(plugin.Plugin):
             { "role": "user", "content": intext}
         ];
         output = ask("@cf/meta/llama-2-7b-chat-int8", inputs)
+        print(output)
         aimessage = output['result']['response']
         await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
