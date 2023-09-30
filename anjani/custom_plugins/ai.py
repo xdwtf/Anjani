@@ -37,9 +37,9 @@ class aiPlugin(plugin.Plugin):
         data = await self.get_data("user_id", user_id)
         print(data)
         if data and "api_token" in data:
-            print(data["account_id"])
-            print(data["api_token"])
-            return data["account_id"], data["api_token"]
+            print(data[0]['account_id'])
+            print(data[0]['api_token'])
+            return data[0]["account_id"], data[0]["api_token"]
         return None, None
 
     @command.filters(filters.private)
