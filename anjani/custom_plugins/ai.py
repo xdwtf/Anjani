@@ -22,7 +22,7 @@ class aiPlugin(plugin.Plugin):
     async def get_data(self, key: str, value: Any) -> Optional[MutableMapping[str, Any]]:
         return await self.db.find_one({key: value})
     
-    async def set_data(self, user_id: int, username: str) -> None:
+    async def set_data(self, user_id: int, account_id: str, api_token: str) -> None:
         await self.db.update_one({"user_id": user_id}, {"$set": {"account_id": account_id, "api_token": api_token}}, upsert=True)
     
     async def get_info(self, user_id: int) -> Optional[str]:
