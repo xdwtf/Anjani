@@ -52,6 +52,7 @@ class aiPlugin(plugin.Plugin):
                 print(intext)
                 if len(intext) > 768:
                     await ctx.respond("Please note that there is a 768 character limit for the replied message.")
+                    print("this return")
                     return
         else:
             await ctx.respond("Reply to Question text")
@@ -68,10 +69,11 @@ class aiPlugin(plugin.Plugin):
         def ask(model, inputs):
             input = { "messages": inputs }
             response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
+            print(response.json())
             return response.json()
         
         inputs = [
-            { "role": "system", "content": "You are a friendly assistant 256 character output limit" },
+            { "role": "system", "content": "You are a friendly assistant" },
             { "role": "user", "content": intext}
         ];
         output = ask("@cf/meta/llama-2-7b-chat-int8", inputs)
