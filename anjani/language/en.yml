@@ -673,3 +673,11 @@ lastfm-help: |
   × `/setusername` : your Last.fm username
   × `/flex` : Flex Last.fm
 #endregion
+#region AI
+ai-button: AI
+ai-help: |
+  Ai Using Workers
+  **Commands**
+  × `/ai` : ask to ai
+  × `/setai` : your account information
+#endregion
