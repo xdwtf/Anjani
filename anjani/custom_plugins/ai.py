@@ -34,8 +34,9 @@ class aiPlugin(plugin.Plugin):
     @command.filters(filters.private)
     async def cmd_setAI(self, ctx: command.Context) -> None:
         """Set the user's AI info"""
-        print(ctx.args)
-        if len(ctx.args) < 1:
+        print(ctx.args[0])
+        print(ctx.args[1])
+        if len(ctx.args) < 2:
             await ctx.respond("Please provide two values as command-line arguments.")
             return
 
