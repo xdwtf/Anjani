@@ -9,7 +9,7 @@ from pyrogram.enums.parse_mode import ParseMode
 
 class aiPlugin(plugin.Plugin):
     name = "AI"
-    helpable: ClassVar[bool] = False #True
+    helpable: ClassVar[bool] = True
 
     db: util.db.AsyncCollection
 
@@ -35,7 +35,7 @@ class aiPlugin(plugin.Plugin):
     async def cmd_setai(self, ctx: command.Context) -> None:
         """Set the user's AI info"""
         if len(ctx.args) < 2:
-            await ctx.respond("Please provide two values as command-line arguments.")
+            await ctx.respond("Please provide two values as `/setai accid apitoken`\n\nhttps://developers.cloudflare.com/workers-ai/get-started/rest-api/")
             return
 
         account_id = ctx.args[0]
