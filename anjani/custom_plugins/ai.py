@@ -27,6 +27,7 @@ class aiPlugin(plugin.Plugin):
     
     async def get_info(self, user_id: int) -> Optional[str]:
         data = await self.get_data("user_id", user_id)
+        print(data)
         if data and "api_token" in data:
             print(data["account_id"])
             print(data["api_token"])
