@@ -1,11 +1,8 @@
 """ AI Plugin """
 import json, requests, urllib.parse, re, datetime
-
 from typing import Any, ClassVar, Mapping, MutableMapping, Optional
-
 from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
-
 from anjani import command, filters, listener, plugin, util
 from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
@@ -51,7 +48,8 @@ class aiPlugin(plugin.Plugin):
         """WORKER AI API CALL"""
         print(ctx.input)
         if not ctx.input:
-            return "Give me a message to send."
+            await ctx.respond("Give me a message to send.")
+            return
         if len(ctx.input) > 768:
             await ctx.respond("Please note that there is a 768 character limit for the replied message.")
             print("this return")
@@ -59,20 +57,30 @@ class aiPlugin(plugin.Plugin):
         print(await self.get_info(ctx.msg.from_user.id))
         account_id, api_token = await self.get_info(ctx.msg.from_user.id)
         if account_id is None:
-            await ctx.respond("AI info not found. Please set your AI infousing /setai in PM")
+            await ctx.respond("AI info not found. Please set your AI info using /setai in PM")
             return
         inputs = [
             { "role": "system", "content": "You are a friendly assistant" },
             { "role": "user", "content": ctx.input}
-        ];
-        input = { "messages": inputs }
+        ]
+        input_data = { "messages": inputs }
         model = "@cf/meta/llama-2-7b-chat-int8" 
         API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
         headers = {"Authorization": f"Bearer {api_token}"}
-        response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input)
-        output = response.json()
-        if 'result' in output and 'response' in output['result']:
-            aimessage = output['result']['response']
-            await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
-        else:
-            await ctx.respond("Failed to retrieve AI response.")
+        
+        try:
+            response = requests.post(f"{API_BASE_URL}{model}", headers=headers, json=input_data)
+            response.raise_for_status()  # Check for HTTP request errors
+            output = response.json()
+            
+            if 'result' in output and 'response' in output['result']:
+                aimessage = output['result']['response']
+                await ctx.respond(aimessage, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+            else:
+                await ctx.respond("Failed to retrieve AI response.")
+        except requests.exceptions.RequestException as e:
+            # Handle request error (e.g., connection error)
+            print(f"Request Error: {e}")
+        except json.JSONDecodeError as e:
+            # Handle JSON parsing error
+            print(f"JSON Decode Error: {e}")
