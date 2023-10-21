@@ -125,7 +125,6 @@ class spotifyPlugin(plugin.Plugin):
 
             caption = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {time_remaining}\nTotal Duration: {total_duration}\n\n[Track URL]({track_url})"
 
-            # Send a photo with the caption
-            await ctx.respond_photo(photo=track_picture_url, caption=caption, parse_mode=ParseMode.MARKDOWN)
+            await ctx.respond(caption, photo=track_picture_url, parse_mode=ParseMode.MARKDOWN)
         else:
-            await ctx.respond("No music is currently playing.")
+            await ctx.respond("No music is currently playing.")\
