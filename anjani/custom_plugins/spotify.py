@@ -17,6 +17,9 @@ def get_current_playback_info(sp):
 
     if current_playback:
         # Extract track URL
+        track_name = current_playback['item']['name']
+        artist_name = current_playback['item']['artists'][0]['name']
+        track_picture_url = current_playback['item']['album']['images'][0]['url']
         track_url = current_playback['item']['external_urls']['spotify']
 
         # Calculate time remaining in the song
@@ -36,6 +39,9 @@ def get_current_playback_info(sp):
 
         # Return the track URL, time remaining, and total duration
         return {
+            "track_name": track_name,
+            "artist_name": artist_name,
+            "track_picture_url": track_picture_url,
             "track_url": track_url,
             "time_remaining": f"{time_remaining_minutes}:{time_remaining_seconds:02}",
             "total_duration": f"{total_minutes}:{total_seconds:02}"
@@ -110,8 +116,12 @@ class spotifyPlugin(plugin.Plugin):
         playback_info = get_current_playback_info(sp)
         
         if playback_info != "No music is currently playing.":
-            message = f"Track URL: {playback_info['track_url']}\nTime Remaining: {playback_info['time_remaining']}\nTotal Duration: {playback_info['total_duration']}"
+            message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {playback_info['time_remaining']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
         else:
             message = playback_info
         
-        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        await ctx.respond_photo(
+            photo=playback_info['track_picture_url'],  # Replace with the URL of your track's image
+            caption=message,
+            parse_mode=ParseMode.MARKDOWN
+        )
