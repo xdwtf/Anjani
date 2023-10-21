@@ -8,4 +8,4 @@ jobs:
     steps:
       - uses: dishapatel010/action-poetry-package-update@V2.0.1
         with:
-          base-branch: X20092023  # Can also be `master`, for exampl
+          base-branch: X20092023-sp  # Can also be `master`, for exampl
