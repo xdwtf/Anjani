@@ -94,13 +94,11 @@ class spotifyPlugin(plugin.Plugin):
     async def cmd_now(self, ctx: command.Context) -> None:
         """Show the user's SPOTIFY NOW"""
         account_info = await self.get_info(ctx.msg.from_user.id)
-        self.log.info("acc info done")
 
         if account_info is None:
             await ctx.respond("SPOTIFY info not found.")
             return
         refresh_token, access_token, expires_at = account_info
-        self.log.info("acc2 info done")
 
         if expires_at < time.time():
             token_info = self.auth_manager.refresh_access_token(refresh_token)
@@ -109,12 +107,11 @@ class spotifyPlugin(plugin.Plugin):
             await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
 
         sp = spotipy.Spotify(access_token)
-        self.log.info("sp done")
         playback_info = get_current_playback_info(sp)
-        self.log.info("playback_info done")
         
         if playback_info != "No music is currently playing.":
             message = f"Track URL: {playback_info['track_url']}\nTime Remaining: {playback_info['time_remaining']}\nTotal Duration: {playback_info['total_duration']}"
         else:
             message = playback_info
-            await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        
+        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
