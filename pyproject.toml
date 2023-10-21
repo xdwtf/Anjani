@@ -32,7 +32,7 @@ anjani = "anjani.main:start"
 [tool.poetry.dependencies]
 python = "~=3.9"
 aiohttp = "^3.8.4"
-aipath == "0.6.11"
+aipath = "0.6.11"
 aiorun = ">=2022.11.1,<2024.0.0"
 beautifulsoup4 = "^4.12.2"
 certifi = { version = ">=2022.12.7,<2024.0.0", platform = "windows" }
