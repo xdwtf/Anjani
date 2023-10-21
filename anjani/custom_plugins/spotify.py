@@ -13,7 +13,7 @@ import datetime
 from spotipy.oauth2 import SpotifyOAuth
 
 # Create the auth manager object with client ID, secret, redirect URI, and scopes
-auth_manager = SpotifyOAuth(client_id={self.bot.config.CLIENT_ID}, client_secret={self.bot.config.CLIENT_SECRET}, redirect_uri='https://localhost:8000/callback',
+auth_manager = SpotifyOAuth(client_id=self.bot.config.CLIENT_ID, client_secret=self.bot.config.CLIENT_SECRET, redirect_uri='https://localhost:8000/callback',
                             scope='user-library-read,user-top-read,user-read-recently-played,user-read-playback-state,user-modify-playback-state,user-read-currently-playing,playlist-read-private,playlist-modify-public,playlist-modify-private,user-follow-read,user-read-email,user-read-private',
                             cache_handler=None)
 
