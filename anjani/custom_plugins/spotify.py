@@ -114,10 +114,18 @@ class spotifyPlugin(plugin.Plugin):
 
         sp = spotipy.Spotify(access_token)
         playback_info = get_current_playback_info(sp)
-        
+
         if playback_info != "No music is currently playing.":
-            message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {playback_info['track_name']}\nArtist: {playback_info['artist_name']}\nTime Remaining: {playback_info['time_remaining']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
+            track_name = playback_info['track_name']
+            artist_name = playback_info['artist_name']
+            time_remaining = playback_info['time_remaining']
+            total_duration = playback_info['total_duration']
+            track_url = playback_info['track_url']
+            track_picture_url = playback_info['track_picture_url']
+
+            caption = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {time_remaining}\nTotal Duration: {total_duration}\n\n[Track URL]({track_url})"
+
+            # Send a photo with the caption
+            await ctx.respond_photo(photo=track_picture_url, caption=caption, parse_mode=ParseMode.MARKDOWN)
         else:
-            message = playback_info
-        
-        await ctx.respond_photo(photo=playback_info['track_picture_url'], caption=message, parse_mode=ParseMode.MARKDOWN)
+            await ctx.respond("No music is currently playing.")
