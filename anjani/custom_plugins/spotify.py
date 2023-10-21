@@ -78,7 +78,7 @@ class spotifyPlugin(plugin.Plugin):
     @command.filters(filters.private)
     async def cmd_regsp(self, ctx: command.Context) -> None:
         """Set the user's SPOTIFY info"""
-        if len(ctx.args) < 2:
+        if len(ctx.args) < 1:
             await ctx.respond("Please provide value as `/regsp refresh_token`")
             return
 
