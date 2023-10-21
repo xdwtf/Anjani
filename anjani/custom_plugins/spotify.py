@@ -116,7 +116,7 @@ class spotifyPlugin(plugin.Plugin):
         playback_info = get_current_playback_info(sp)
         
         if playback_info != "No music is currently playing.":
-            message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {playback_info['time_remaining']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
+            message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {playback_info['track_name']}\nArtist: {playback_info['artist_name']}\nTime Remaining: {playback_info['time_remaining']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
         else:
             message = playback_info
         
