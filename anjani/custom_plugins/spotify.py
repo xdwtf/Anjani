@@ -120,8 +120,4 @@ class spotifyPlugin(plugin.Plugin):
         else:
             message = playback_info
         
-        await ctx.respond_photo(
-            photo=playback_info['track_picture_url'],  # Replace with the URL of your track's image
-            caption=message,
-            parse_mode=ParseMode.MARKDOWN
-        )
+        await ctx.respond_photo(photo=playback_info['track_picture_url'], caption=message, parse_mode=ParseMode.MARKDOWN)
