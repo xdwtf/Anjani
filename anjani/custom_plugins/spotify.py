@@ -12,11 +12,6 @@ import spotipy
 import datetime
 from spotipy.oauth2 import SpotifyOAuth
 
-# Create the auth manager object with client ID, secret, redirect URI, and scopes
-auth_manager = SpotifyOAuth(client_id=self.bot.config.CLIENT_ID, client_secret=self.bot.config.CLIENT_SECRET, redirect_uri='https://localhost:8000/callback',
-                            scope='user-library-read,user-top-read,user-read-recently-played,user-read-playback-state,user-modify-playback-state,user-read-currently-playing,playlist-read-private,playlist-modify-public,playlist-modify-private,user-follow-read,user-read-email,user-read-private',
-                            cache_handler=None)
-
 def get_current_playback_info(sp):
     current_playback = sp.current_playback()
 
@@ -53,9 +48,20 @@ class spotifyPlugin(plugin.Plugin):
     helpable: ClassVar[bool] = False
 
     db: util.db.AsyncCollection
+    auth_manager: SpotifyOAuth
 
     async def on_load(self) -> None:
         self.db = self.bot.db.get_collection("SPOTIFY")
+
+        # Initialize auth_manager using self
+        self.auth_manager = SpotifyOAuth(
+            client_id=self.bot.config.CLIENT_ID,
+            client_secret=self.bot.config.CLIENT_SECRET,
+            redirect_uri='https://localhost:8000/callback',
+            scope='user-library-read,user-top-read,user-read-recently-played,user-read-playback-state,user-modify-playback-state,user-read-currently-playing,playlist-read-private,playlist-modify-public,playlist-modify-private,user-follow-read,user-read-email,user-read-private',
+            cache_handler=None, 
+            requests_timeout=60
+        )
 
     async def get_data(self, key: str, value: Any) -> Optional[MutableMapping[str, Any]]:
         return await self.db.find_one({key: value})
@@ -71,13 +77,13 @@ class spotifyPlugin(plugin.Plugin):
       
     @command.filters(filters.private)
     async def cmd_regsp(self, ctx: command.Context) -> None:
-        """Set the user's AI info"""
+        """Set the user's SPOTIFY info"""
         if len(ctx.args) < 2:
             await ctx.respond("Please provide value as `/regsp refresh_token`")
             return
 
         refresh_token = ctx.args[0]
-        token_info = auth_manager.refresh_access_token(refresh_token)
+        token_info = self.auth_manager.refresh_access_token(refresh_token)
         access_token = token_info['access_token']
         expires_at = time.time() + 3600
         
@@ -93,7 +99,7 @@ class spotifyPlugin(plugin.Plugin):
             return
         refresh_token, access_token, expires_at = account_info
         if expires_at < time.time():
-            token_info = auth_manager.refresh_access_token(refresh_token)
+            token_info = self.auth_manager.refresh_access_token(refresh_token)
             access_token = token_info['access_token']
             expires_at = time.time() + 3600
             await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
