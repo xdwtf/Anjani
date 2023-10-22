@@ -131,12 +131,14 @@ class spotifyPlugin(plugin.Plugin):
     
     @command.filters(filters.private | filters.group)
     async def cmd_toptracks(self, ctx: command.Context) -> None:
-        """Show the user's top 5 tracks based on time range (short, medium, long)."""
-        time_range = ctx.args[0].lower() if len(ctx.args) > 0 else 'medium_term'
+        """Show the user's top 5 tracks based on time range (s: short, m: medium, l: long)."""
+        time_range_map = {
+            's': 'short_term',
+            'm': 'medium_term',
+            'l': 'long_term'
+        }
 
-        if time_range not in ['short_term', 'medium_term', 'long_term']:
-            await ctx.respond("Invalid time range. Please use 'short', 'medium', or 'long'.")
-            return
+        time_range = time_range_map.get(ctx.args[0].lower(), 'm')
 
         account_info = await self.get_info(ctx.msg.from_user.id)
 
@@ -156,6 +158,6 @@ class spotifyPlugin(plugin.Plugin):
 
         if top_tracks:
             top_tracks_info = "\n".join([f"{i + 1}. [{track['name']} by {', '.join(artist['name'] for artist in track['artists'])}]({track['external_urls']['spotify']})" for i, track in enumerate(top_tracks['items'])])
-            await ctx.respond(f"Here are your top 5 tracks on Spotify ({time_range}):\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+            await ctx.respond(f"Here are your top 5 tracks on Spotify ({time_range_map[time_range]}):\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         else:
             await ctx.respond("No top tracks found.")
