@@ -131,7 +131,13 @@ class spotifyPlugin(plugin.Plugin):
     
     @command.filters(filters.private | filters.group)
     async def cmd_toptracks(self, ctx: command.Context) -> None:
-        """Show the user's top 5 tracks."""
+        """Show the user's top 5 tracks based on time range (short, medium, long)."""
+        time_range = ctx.args[0].lower() if len(ctx.args) > 0 else 'medium_term'
+
+        if time_range not in ['short_term', 'medium_term', 'long_term']:
+            await ctx.respond("Invalid time range. Please use 'short', 'medium', or 'long'.")
+            return
+
         account_info = await self.get_info(ctx.msg.from_user.id)
 
         if account_info is None:
@@ -146,10 +152,10 @@ class spotifyPlugin(plugin.Plugin):
             await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
 
         sp = spotipy.Spotify(access_token)
-        top_tracks = sp.current_user_top_tracks(limit=5, offset=0, time_range='medium_term')
+        top_tracks = sp.current_user_top_tracks(limit=5, offset=0, time_range=time_range)
 
         if top_tracks:
-            top_tracks_info = "\n".join([f"{i + 1}. [{track['name']}]({track['external_urls']['spotify']}) by {', '.join(artist['name'] for artist in track['artists'])}" for i, track in enumerate(top_tracks['items'])])
-            await ctx.respond(f"Here are your top 5 tracks on Spotify:\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+            top_tracks_info = "\n".join([f"{i + 1}. [{track['name']} by {', '.join(artist['name'] for artist in track['artists'])}]({track['external_urls']['spotify']})" for i, track in enumerate(top_tracks['items'])])
+            await ctx.respond(f"Here are your top 5 tracks on Spotify ({time_range}):\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         else:
             await ctx.respond("No top tracks found.")
