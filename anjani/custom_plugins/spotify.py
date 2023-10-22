@@ -138,7 +138,7 @@ class spotifyPlugin(plugin.Plugin):
             'l': 'long_term'
         }
 
-        time_range_arg = ctx.args[0].lower() if len(ctx.args) > 0 else 'm'
+        time_range_arg = ctx.args[0].lower() if len(ctx.args) > 0 else 'medium_term'
 
         if time_range_arg not in time_range_map:
             await ctx.respond("Invalid time range. Please use 's' for short, 'm' for medium, or 'l' for long.")
@@ -164,6 +164,6 @@ class spotifyPlugin(plugin.Plugin):
 
         if top_tracks:
             top_tracks_info = "\n".join([f"{i + 1}. [{track['name']} by {', '.join(artist['name'] for artist in track['artists'])}]({track['external_urls']['spotify']})" for i, track in enumerate(top_tracks['items'])])
-            await ctx.respond(f"Here are your top 5 tracks on Spotify ({time_range_map[time_range]}):\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+            await ctx.respond(f"Here are your top 5 tracks on Spotify ({time_range}):\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         else:
             await ctx.respond("No top tracks found.")
