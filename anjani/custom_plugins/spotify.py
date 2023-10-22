@@ -128,3 +128,29 @@ class spotifyPlugin(plugin.Plugin):
             await ctx.respond(sptxt, photo=track_picture_url, parse_mode=ParseMode.MARKDOWN)
         else:
             await ctx.respond("No music is currently playing.")
+    
+    @command.filters(filters.private)
+    async def cmd_toptracks(self, ctx: command.Context) -> None:
+        """Show the user's top 5 tracks."""
+        account_info = await self.get_info(ctx.msg.from_user.id)
+
+        if account_info is None:
+            await ctx.respond("SPOTIFY info not found.")
+            return
+        refresh_token, access_token, expires_at = account_info
+
+        if expires_at < time.time():
+            token_info = self.auth_manager.refresh_access_token(refresh_token)
+            access_token = token_info['access_token']
+            expires_at = time.time() + 3600
+            await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
+
+        sp = spotipy.Spotify(access_token)
+        top_tracks = sp.current_user_top_tracks(limit=5, offset=0, time_range='medium_term')
+
+        if top_tracks:
+            top_tracks_info = "\n".join([f"{i + 1}. {track['name']} by {', '.join(artist['name'] for artist in track['artists'])}" for i, track in enumerate(top_tracks['items'])])
+            await ctx.respond(f"Your top 5 tracks:\n{top_tracks_info}")
+        else:
+            await ctx.respond("No top tracks found.")
+        
