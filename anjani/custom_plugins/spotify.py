@@ -149,8 +149,7 @@ class spotifyPlugin(plugin.Plugin):
         top_tracks = sp.current_user_top_tracks(limit=5, offset=0, time_range='medium_term')
 
         if top_tracks:
-            top_tracks_info = "\n".join([f"{i + 1}. {track['name']} by {', '.join(artist['name'] for artist in track['artists'])}" for i, track in enumerate(top_tracks['items'])])
-            await ctx.respond(f"Your top 5 tracks:\n{top_tracks_info}")
+            top_tracks_info = "\n".join([f"{i + 1}. [{track['name']}]({track['external_urls']['spotify']}) by {', '.join(artist['name'] for artist in track['artists'])}" for i, track in enumerate(top_tracks['items'])])
+            await ctx.respond(f"Here are your top 5 tracks on Spotify:\n\n{top_tracks_info}", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         else:
             await ctx.respond("No top tracks found.")
-        
