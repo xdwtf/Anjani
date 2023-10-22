@@ -138,7 +138,13 @@ class spotifyPlugin(plugin.Plugin):
             'l': 'long_term'
         }
 
-        time_range = time_range_map.get(ctx.args[0].lower(), 'm')
+        time_range_arg = ctx.args[0].lower() if len(ctx.args) > 0 else 'm'
+
+        if time_range_arg not in time_range_map:
+            await ctx.respond("Invalid time range. Please use 's' for short, 'm' for medium, or 'l' for long.")
+            return
+
+        time_range = time_range_map[time_range_arg]
 
         account_info = await self.get_info(ctx.msg.from_user.id)
 
