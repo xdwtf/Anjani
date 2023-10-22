@@ -129,7 +129,7 @@ class spotifyPlugin(plugin.Plugin):
         else:
             await ctx.respond("No music is currently playing.")
     
-    @command.filters(filters.private)
+    @command.filters(filters.private | filters.group)
     async def cmd_toptracks(self, ctx: command.Context) -> None:
         """Show the user's top 5 tracks."""
         account_info = await self.get_info(ctx.msg.from_user.id)
