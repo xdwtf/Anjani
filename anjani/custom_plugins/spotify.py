@@ -96,8 +96,8 @@ class spotifyPlugin(plugin.Plugin):
         await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
         await ctx.respond(f"SPOTIFY info has been set.")
 
-    @command.filters(filters.private | filters.group, aliases=["np"])
-    async def cmd_now(self, ctx: command.Context) -> None:
+    @command.filters(filters.private | filters.group)
+    async def cmd_cp(self, ctx: command.Context) -> None:
         """Show the user's SPOTIFY NOW"""
         account_info = await self.get_info(ctx.msg.from_user.id)
 
@@ -123,7 +123,7 @@ class spotifyPlugin(plugin.Plugin):
             track_url = playback_info['track_url']
             track_picture_url = playback_info['track_picture_url']
 
-            sptxt = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {time_remaining}\nTotal Duration: {total_duration}\n\n[Track URL]({track_url})"
+            sptxt = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {time_remaining}\nTotal Duration: {total_duration}\n\n[Track URL]({track_url})"
 
             await ctx.respond(sptxt, photo=track_picture_url, parse_mode=ParseMode.MARKDOWN)
         else:
