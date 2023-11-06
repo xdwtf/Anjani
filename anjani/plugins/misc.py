@@ -178,7 +178,6 @@ class Misc(plugin.Plugin):
                 response = requests.request("GET", urlx)
                 data = response.json()
                 entities = data.get("entitiesByUniqueId", {})
-                self.log.info(entities)
                 song_entity = next(iter(entities.values()))
                 artist_name = song_entity.get("artistName")
                 title = song_entity.get("title")
