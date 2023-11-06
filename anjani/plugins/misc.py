@@ -208,7 +208,7 @@ class Misc(plugin.Plugin):
                 self.log.info(f"music else part")
                 return None
         except Exception as e:
-            self.log.error(f"An error occurred: {e}")
+            self.log.error(e, exc_info=e)
             return None
 
     async def handle_threads(self, message: Message) -> None:
@@ -271,7 +271,7 @@ class Misc(plugin.Plugin):
                     os.remove(filepath)
 
         except Exception as e:
-            self.log.error(f"An error occurred: {e}")
+            self.log.error(e, exc_info=e)
             return None
 
     @command.filters(filters.private)
