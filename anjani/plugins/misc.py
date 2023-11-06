@@ -170,7 +170,7 @@ class Misc(plugin.Plugin):
         chat = message.chat
         userx = message.from_user
         ie = message.reply_to_message or message
-        xd = platforms_regex.findall(message.text)
+        xd = platforms_regex.search(message.text)
 
         try:
             if xd:
@@ -178,6 +178,7 @@ class Misc(plugin.Plugin):
                 response = requests.request("GET", urlx)
                 data = response.json()
                 entities = data.get("entitiesByUniqueId", {})
+                self.log.info(entities)
                 song_entity = next(iter(entities.values()))
                 artist_name = song_entity.get("artistName")
                 title = song_entity.get("title")
