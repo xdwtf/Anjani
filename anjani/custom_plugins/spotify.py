@@ -168,13 +168,21 @@ def get_current_playback_info(sp):
         total_minutes = total_seconds // 60
         total_seconds %= 60
 
+        current_minutes = total_minutes - time_remaining_minutes
+        current_seconds = total_seconds - time_remaining_seconds
+
+        # If the current_seconds becomes negative, adjust it
+        if current_seconds < 0:
+            current_seconds += 60
+            current_minutes -= 1
+
         # Return the track URL, time remaining, and total duration
         return {
             "track_name": track_name,
             "artist_name": artist_name,
             "track_picture_url": track_picture_url,
             "track_url": track_url,
-            "time_remaining": f"{time_remaining_minutes}:{time_remaining_seconds:02}",
+            "current_time": f"{current_minutes}:{current_seconds:02}",
             "total_duration": f"{total_minutes}:{total_seconds:02}"
         }
     else:
@@ -247,16 +255,18 @@ class spotifyPlugin(plugin.Plugin):
         playback_info = get_current_playback_info(sp)
 
         if playback_info != "No music is currently playing.":
-            track_name = playback_info['track_name']
-            artist_name = playback_info['artist_name']
-            time_remaining = playback_info['time_remaining']
-            total_duration = playback_info['total_duration']
-            track_url = playback_info['track_url']
-            track_picture_url = playback_info['track_picture_url']
+            # Generate a custom image using create_custom_image
+            custom_image = create_custom_image(
+                track_picture_url=playback_info['track_picture_url'],
+                track_name=playback_info['track_name'],
+                artist_name=playback_info['artist_name'],
+                current_time=playback_info['current_time'],
+                total_duration=playback_info['total_duration']
+            )
 
-            sptxt = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\nTrack: {track_name}\nArtist: {artist_name}\nTime Remaining: {time_remaining}\nTotal Duration: {total_duration}\n\n[Track URL]({track_url})"
+            # Send the custom image in the response
+            await ctx.respond("Here's your Spotify information:", photo=custom_image)
 
-            await ctx.respond(sptxt, photo=track_picture_url, parse_mode=ParseMode.MARKDOWN)
         else:
             await ctx.respond("No music is currently playing.")
     
