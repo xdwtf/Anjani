@@ -21,7 +21,7 @@ def create_custom_image(track_picture_url, track_name, artist_name, current_time
     music_cover = Image.open(BytesIO(response.content))
 
     # Open the profile picture (pfp) image and resize it as circular
-    pfp = Image.open('pfp.jpg')
+    pfp = Image.open('/app/anjani/custom_plugins/pfp.jpg')
     pfp = pfp.resize((music_cover.width // 9, music_cover.width // 9))
 
     # Create a circular mask image with the same size as pfp
@@ -88,7 +88,7 @@ def create_custom_image(track_picture_url, track_name, artist_name, current_time
     font_size = 20  # Adjust the font size as needed
 
     # Load the default font with the custom size
-    font = ImageFont.truetype("NotoSans-Medium.ttf", font_size)
+    font = ImageFont.truetype("/app/anjani/custom_plugins/NotoSans-Medium.ttf", font_size)
 
     draw = ImageDraw.Draw(output_image)
 
