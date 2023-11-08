@@ -12,6 +12,137 @@ import spotipy
 import datetime
 from spotipy.oauth2 import SpotifyOAuth
 
+from io import BytesIO
+from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageEnhance
+
+def create_custom_image(track_picture_url, track_name, artist_name, current_time, total_duration):
+    # Fetch the image from the URL
+    response = requests.get(track_picture_url)
+    music_cover = Image.open(BytesIO(response.content))
+
+    # Open the profile picture (pfp) image and resize it as circular
+    pfp = Image.open('pfp.jpg')
+    pfp = pfp.resize((music_cover.width // 9, music_cover.width // 9))
+
+    # Create a circular mask image with the same size as pfp
+    mask = Image.new('L', pfp.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0, pfp.width, pfp.height), fill=255)
+
+    # Apply the mask to the pfp image
+    pfp.putalpha(mask)
+
+    # Blur the music cover image
+    blurred_music_cover = music_cover.copy()
+    blurred_music_cover = blurred_music_cover.filter(ImageFilter.GaussianBlur(radius=10))
+
+    # Reduce the brightness of the blurred background
+    enhancer = ImageEnhance.Brightness(blurred_music_cover)
+    blurred_music_cover = enhancer.enhance(0.5)  # Adjust the brightness factor as needed
+
+    # Calculate the position to center the unblurred circular music cover
+    x_offset = 100
+    y_offset = 100
+
+    # Increase the size of the blurred background
+    desired_background_size = (600, 600)  # Adjust the size as needed
+    blurred_music_cover = blurred_music_cover.resize(desired_background_size)
+
+    # Resize only the circular music cover (not blurred)
+    desired_size = (400, 400)  # Change the size as needed
+    music_cover = music_cover.resize(desired_size)
+
+    # Create a circular mask for the original music cover
+    mask = Image.new('L', music_cover.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rectangle((0, 0, music_cover.width, music_cover.height), fill=255)
+
+    # Apply the mask to the original music cover
+    music_cover.putalpha(mask)
+
+    # Calculate the position to place the pfp on the right side and a little below the circular music cover
+    adjacent_x = x_offset + music_cover.width  # Adjust the value to move it to the right
+    adjacent_y = y_offset // 6  # Adjust the value to move it a bit below
+
+    # Create a new image for the final output
+    output_image = Image.new('RGBA', (blurred_music_cover.width, blurred_music_cover.height))
+
+    # Paste the blurred music cover as the background
+    output_image.paste(blurred_music_cover, (0, 0))
+
+    # Paste the unblurred circular music cover in the center
+    output_image.paste(music_cover, (x_offset, y_offset), music_cover)
+
+    # Paste the pfp on the right side and a little below the circular music cover
+    output_image.paste(pfp, (adjacent_x, adjacent_y), pfp)
+
+    # Truncate track name and artist name if they are too long
+    max_track_name_length = 20
+    max_artist_name_length = 20
+    track_name = (track_name[:max_track_name_length] + '...') if len(track_name) > max_track_name_length else track_name
+    artist_name = (artist_name[:max_artist_name_length] + '...') if len(artist_name) > max_artist_name_length else artist_name
+
+    # Add your own text right below the center unblurred image
+    text = f"{track_name} by {artist_name}\n{current_time} | {total_duration}"
+    # Set the custom font size
+    font_size = 20  # Adjust the font size as needed
+
+    # Load the default font with the custom size
+    font = ImageFont.truetype("NotoSans-Medium.ttf", font_size)
+
+    draw = ImageDraw.Draw(output_image)
+
+    # Calculate the position for the text
+    text_bbox = draw.textbbox((x_offset, y_offset + music_cover.height), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+
+    # Calculate the horizontal center
+    text_x = (output_image.width - text_width) // 2
+
+    # Split the text into lines
+    lines = text.split('\n')
+
+    # Calculate vertical position right below the circular cover
+    line_height = text_bbox[3] - text_bbox[1]
+    text_y = y_offset + music_cover.height + 15
+
+    # Function to determine text color based on background brightness
+    def get_text_color(bg_color):
+        # Calculate perceived luminance (brightness)
+        luminance = (0.299 * bg_color[0] + 0.587 * bg_color[1] + 0.114 * bg_color[2]) / 255
+        # Choose black or white text based on luminance
+        return (0, 0, 0) if luminance > 0.5 else (255, 255, 255)
+
+    # Get the background color at the text position
+    bg_color = output_image.getpixel((text_x, text_y))  # Replace with the actual position
+
+    # Get the appropriate text color based on the background
+    text_color = get_text_color(bg_color)
+
+    # Draw each line of text with the determined text color
+    for line in lines:
+        text_bbox = draw.textbbox((x_offset, text_y), line, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_x = (output_image.width - text_width) // 2
+        draw.text((text_x, text_y), line, font=font, fill=text_color)
+        text_y += line_height
+
+    # Save the final image
+    #output_image.save('xy.png')
+    output_stream = io.BytesIO()
+
+    # Save the final image to the binary stream
+    output_image.save(output_stream, format="PNG")
+
+    # Set the name attribute for in-memory upload
+    output_stream.name = "custom_image.png"
+
+    # Reset the stream position to the beginning
+    output_stream.seek(0)
+
+    return output_stream
+
+
 def get_current_playback_info(sp):
     current_playback = sp.current_playback()
 
