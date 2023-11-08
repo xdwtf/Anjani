@@ -12,6 +12,7 @@ import spotipy
 import datetime
 from spotipy.oauth2 import SpotifyOAuth
 
+import io
 from io import BytesIO
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageEnhance
 
