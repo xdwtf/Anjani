@@ -293,7 +293,7 @@ class spotifyPlugin(plugin.Plugin):
         account_info = await self.get_info(ctx.msg.from_user.id)
 
         if account_info is None:
-            await ctx.respond("SPOTIFY info not found.")
+            await ctx.respond("Authorize Spotify using /authsp in PM")
             return
         refresh_token, access_token, expires_at = account_info
 
