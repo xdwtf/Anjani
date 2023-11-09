@@ -222,8 +222,9 @@ class Main(plugin.Plugin):
                 return None
 
             if ctx.input == "music":
-                mt = f"1. **Command: now** - Display current Spotify track. Usage: `/now`. Example: `/now`\n\n2. **Command: toptracks** - Show top 5 tracks by time range. Usage: `/toptracks [s|m|l]`. Params: `s` (4 weeks), `m` (6 months), `l` (all time). Example: `/toptracks m`"
-                return await ctx.respond(mt, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+                mt = f"now - Display current Spotify track.\nUsage: `/now`.\n\ntoptracks - Show top 5 tracks by time range.\nUsage: `/toptracks [s|m|l]`. use 's' for short, 'm' for medium, or 'l' for long.\nExample: `/toptracks m`"
+                await ctx.respond(mt, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+                return None
 
             if ctx.input:
                 rules_re = re.compile(r"rules_(.*)")
