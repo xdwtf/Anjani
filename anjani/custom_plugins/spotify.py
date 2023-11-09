@@ -204,8 +204,8 @@ class spotifyPlugin(plugin.Plugin):
         self.auth_manager = SpotifyOAuth(
             client_id=self.bot.config.CLIENT_ID,
             client_secret=self.bot.config.CLIENT_SECRET,
-            redirect_uri='https://localhost:8000/callback',
-            scope='user-library-read,user-top-read,user-read-recently-played,user-read-playback-state,user-modify-playback-state,user-read-currently-playing,playlist-read-private,playlist-modify-public,playlist-modify-private,user-follow-read,user-read-email,user-read-private',
+            redirect_uri='https://eyamika.isthis.tv/callback',
+            scope='user-library-read,user-top-read,user-read-recently-played,user-read-playback-state,user-read-currently-playing,user-read-private',
             cache_handler=None, 
             requests_timeout=60
         )
@@ -223,19 +223,10 @@ class spotifyPlugin(plugin.Plugin):
       return None
       
     @command.filters(filters.private)
-    async def cmd_regsp(self, ctx: command.Context) -> None:
+    async def cmd_authsp(self, ctx: command.Context) -> None:
         """Set the user's SPOTIFY info"""
-        if len(ctx.args) < 1:
-            await ctx.respond("Please provide value as `/regsp refresh_token`")
-            return
-
-        refresh_token = ctx.args[0]
-        token_info = self.auth_manager.refresh_access_token(refresh_token)
-        access_token = token_info['access_token']
-        expires_at = time.time() + 3600
-        
-        await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
-        await ctx.respond(f"SPOTIFY info has been set.")
+        auth_url = self.auth_manager.get_authorize_url(state=ctx.msg.from_user.id)
+        await ctx.respond(f"[AUTHORIZE]({auth_url})", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
     @command.filters(filters.private | filters.group)
     async def cmd_cp(self, ctx: command.Context) -> None:
