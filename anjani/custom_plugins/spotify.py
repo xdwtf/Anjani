@@ -204,7 +204,7 @@ class spotifyPlugin(plugin.Plugin):
         self.auth_manager = SpotifyOAuth(
             client_id=self.bot.config.CLIENT_ID,
             client_secret=self.bot.config.CLIENT_SECRET,
-            redirect_uri='https://eyamika.isthis.tv/callback',
+            redirect_uri='https://eyamika.vercel.app/callback',
             scope='user-library-read,user-top-read,user-read-recently-played,user-read-playback-state,user-read-currently-playing,user-read-private',
             cache_handler=None, 
             requests_timeout=60
