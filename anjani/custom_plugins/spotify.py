@@ -16,13 +16,14 @@ import io
 from io import BytesIO
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageEnhance
 
-def create_custom_image(track_picture_url, track_name, artist_name, current_time, total_duration):
+def create_custom_image(track_picture_url, upfp, track_name, artist_name, current_time, total_duration):
     # Fetch the image from the URL
     response = requests.get(track_picture_url)
     music_cover = Image.open(BytesIO(response.content))
 
     # Open the profile picture (pfp) image and resize it as circular
-    pfp = Image.open('/app/anjani/custom_plugins/pfp.jpg')
+    #pfp = Image.open('/app/anjani/custom_plugins/pfp.jpg')
+    pfp = Image.open(upfp)
     pfp = pfp.resize((music_cover.width // 9, music_cover.width // 9))
 
     # Create a circular mask image with the same size as pfp
@@ -240,6 +241,12 @@ class spotifyPlugin(plugin.Plugin):
     async def cmd_cp(self, ctx: command.Context) -> None:
         """Show the user's SPOTIFY NOW"""
         account_info = await self.get_info(ctx.msg.from_user.id)
+        user = await self.bot.client.get_users(ctx.msg.from_user.id)
+        if user.photo:
+            file = await self.bot.client.download_media(user.photo.big_file_id)
+            upfp = file
+        else:
+            upfp = '/app/anjani/custom_plugins/pfp.jpg'
 
         if account_info is None:
             await ctx.respond("SPOTIFY info not found.")
@@ -259,6 +266,7 @@ class spotifyPlugin(plugin.Plugin):
             # Generate a custom image using create_custom_image
             custom_image = create_custom_image(
                 track_picture_url=playback_info['track_picture_url'],
+                upfp=upfp,
                 track_name=playback_info['track_name'],
                 artist_name=playback_info['artist_name'],
                 current_time=playback_info['current_time'],
