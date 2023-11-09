@@ -241,12 +241,6 @@ class spotifyPlugin(plugin.Plugin):
     async def cmd_cp(self, ctx: command.Context) -> None:
         """Show the user's SPOTIFY NOW"""
         account_info = await self.get_info(ctx.msg.from_user.id)
-        user = await self.bot.client.get_users(ctx.msg.from_user.id)
-        if user.photo:
-            file = await self.bot.client.download_media(user.photo.big_file_id)
-            upfp = file
-        else:
-            upfp = '/app/anjani/custom_plugins/pfp.jpg'
 
         if account_info is None:
             await ctx.respond("SPOTIFY info not found.")
@@ -263,6 +257,12 @@ class spotifyPlugin(plugin.Plugin):
         playback_info = get_current_playback_info(sp)
 
         if playback_info != "No music is currently playing.":
+            user = await self.bot.client.get_users(ctx.msg.from_user.id)
+            if user.photo:
+                file = await self.bot.client.download_media(user.photo.big_file_id)
+                upfp = file
+            else:
+                upfp = '/app/anjani/custom_plugins/pfp.jpg'
             # Generate a custom image using create_custom_image
             custom_image = create_custom_image(
                 track_picture_url=playback_info['track_picture_url'],
@@ -273,8 +273,9 @@ class spotifyPlugin(plugin.Plugin):
                 total_duration=playback_info['total_duration']
             )
 
-            # Send the custom image in the response
-            await ctx.respond("Here's your Spotify information:", photo=custom_image)
+            sptxt = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\nTrack: {playback_info['track_name']}\nArtist: {playback_info['artist_name']}\nTime Current: {playback_info['current_time']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
+
+            await ctx.respond(sptxt, photo=custom_image)
 
         else:
             await ctx.respond("No music is currently playing.")
