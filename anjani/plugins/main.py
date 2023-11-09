@@ -221,6 +221,9 @@ class Main(plugin.Plugin):
                 )
                 return None
 
+            if ctx.input == "music":
+                return await ctx.respond(await self.text(chat.id, "lastfm-help"))
+
             if ctx.input:
                 rules_re = re.compile(r"rules_(.*)")
                 if rules_re.search(ctx.input):
