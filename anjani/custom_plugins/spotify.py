@@ -6,6 +6,7 @@ from aiopath import AsyncPath
 from anjani import command, filters, listener, plugin, util
 from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
+from pyrogram.enums.chat_action import ChatAction
 
 import time
 import spotipy
@@ -231,45 +232,46 @@ class spotifyPlugin(plugin.Plugin):
     @command.filters(filters.private | filters.group)
     async def cmd_cp(self, ctx: command.Context) -> None:
         """Show the user's SPOTIFY NOW"""
-        account_info = await self.get_info(ctx.msg.from_user.id)
+        async with ctx.action(ChatAction.TYPING):
+            account_info = await self.get_info(ctx.msg.from_user.id)
 
-        if account_info is None:
-            await ctx.respond("SPOTIFY info not found.")
-            return
-        refresh_token, access_token, expires_at = account_info
+            if account_info is None:
+                await ctx.respond("SPOTIFY info not found.")
+                return
+            refresh_token, access_token, expires_at = account_info
 
-        if expires_at < time.time():
-            token_info = self.auth_manager.refresh_access_token(refresh_token)
-            access_token = token_info['access_token']
-            expires_at = time.time() + 3600
-            await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
+            if expires_at < time.time():
+                token_info = self.auth_manager.refresh_access_token(refresh_token)
+                access_token = token_info['access_token']
+                expires_at = time.time() + 3600
+                await self.set_data(ctx.msg.from_user.id, refresh_token, access_token, expires_at)
 
-        sp = spotipy.Spotify(access_token)
-        playback_info = get_current_playback_info(sp)
+            sp = spotipy.Spotify(access_token)
+            playback_info = get_current_playback_info(sp)
 
-        if playback_info != "No music is currently playing.":
-            user = await self.bot.client.get_users(ctx.msg.from_user.id)
-            if user.photo:
-                file = await self.bot.client.download_media(user.photo.big_file_id)
-                upfp = file
+            if playback_info != "No music is currently playing.":
+                user = await self.bot.client.get_users(ctx.msg.from_user.id)
+                if user.photo:
+                    file = await self.bot.client.download_media(user.photo.big_file_id)
+                    upfp = file
+                else:
+                    upfp = '/app/anjani/custom_plugins/pfp.jpg'
+                # Generate a custom image using create_custom_image
+                custom_image = create_custom_image(
+                    track_picture_url=playback_info['track_picture_url'],
+                    upfp=upfp,
+                    track_name=playback_info['track_name'],
+                    artist_name=playback_info['artist_name'],
+                    current_time=playback_info['current_time'],
+                    total_duration=playback_info['total_duration']
+                )
+
+                sptxt = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\nTrack: {playback_info['track_name']}\nArtist: {playback_info['artist_name']}\nTime Current: {playback_info['current_time']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
+
+                await ctx.respond(sptxt, photo=custom_image)
+
             else:
-                upfp = '/app/anjani/custom_plugins/pfp.jpg'
-            # Generate a custom image using create_custom_image
-            custom_image = create_custom_image(
-                track_picture_url=playback_info['track_picture_url'],
-                upfp=upfp,
-                track_name=playback_info['track_name'],
-                artist_name=playback_info['artist_name'],
-                current_time=playback_info['current_time'],
-                total_duration=playback_info['total_duration']
-            )
-
-            sptxt = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\nTrack: {playback_info['track_name']}\nArtist: {playback_info['artist_name']}\nTime Current: {playback_info['current_time']}\nTotal Duration: {playback_info['total_duration']}\n\n[Track URL]({playback_info['track_url']})"
-
-            await ctx.respond(sptxt, photo=custom_image)
-
-        else:
-            await ctx.respond("No music is currently playing.")
+                await ctx.respond("No music is currently playing.")
     
     @command.filters(filters.private | filters.group)
     async def cmd_toptracks(self, ctx: command.Context) -> None:
