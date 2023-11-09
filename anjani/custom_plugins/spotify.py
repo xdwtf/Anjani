@@ -227,16 +227,16 @@ class spotifyPlugin(plugin.Plugin):
     async def cmd_authsp(self, ctx: command.Context) -> None:
         """Set the user's SPOTIFY info"""
         auth_url = self.auth_manager.get_authorize_url(state=ctx.msg.from_user.id)
-        await ctx.respond(f"[AUTHORIZE]({auth_url})", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+        await ctx.respond(f"To link your Spotify account, click [Authorize]({auth_url}).", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
-    @command.filters(filters.private | filters.group)
-    async def cmd_cp(self, ctx: command.Context) -> None:
+    @command.filters(filters.private | filters.group, aliases=["cp"])
+    async def cmd_now(self, ctx: command.Context) -> None:
         """Show the user's SPOTIFY NOW"""
         async with ctx.action(ChatAction.TYPING):
             account_info = await self.get_info(ctx.msg.from_user.id)
 
             if account_info is None:
-                await ctx.respond("SPOTIFY info not found.")
+                await ctx.respond("Authorize Spotify using /authsp in PM")
                 return
             refresh_token, access_token, expires_at = account_info
 
