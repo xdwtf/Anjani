@@ -13,7 +13,7 @@ import spotipy
 import datetime
 from spotipy.oauth2 import SpotifyOAuth
 
-import io
+import io, random
 from io import BytesIO
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageEnhance
 
@@ -58,8 +58,11 @@ def create_custom_image(track_picture_url, upfp, track_name, artist_name, curren
     # Create a circular mask for the original music cover
     mask = Image.new('L', music_cover.size, 0)
     draw = ImageDraw.Draw(mask)
-    draw.rectangle((0, 0, music_cover.width, music_cover.height), fill=255)
-
+    xds = random.choice(["rectangle", "ellipse"])
+    if xds == "rectangle":
+        draw.rectangle((0, 0, music_cover.width, music_cover.height), fill=255)
+    else: 
+        draw.ellipse((0, 0, music_cover.width, music_cover.height), fill=255)
     # Apply the mask to the original music cover
     music_cover.putalpha(mask)
 
