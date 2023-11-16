@@ -94,7 +94,7 @@ def create_custom_image(track_picture_url, upfp, track_name, artist_name, curren
     font_size = 20  # Adjust the font size as needed
 
     # Load the default font with the custom size
-    font = ImageFont.truetype("/app/anjani/custom_plugins/NotoSans-Medium.ttf", font_size)
+    font = ImageFont.truetype("/app/anjani/custom_plugins/NotoSansMongolian-Regular.ttf", font_size)
 
     draw = ImageDraw.Draw(output_image)
 
