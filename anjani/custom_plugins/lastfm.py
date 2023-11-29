@@ -172,7 +172,7 @@ class LastfmPlugin(plugin.Plugin):
         top_albums = albums[:10]
         total_play_count = sum(int(albums['playcount']) for albums in top_albums)
         # Prepare a message with top 10 album information as a numbered list
-        album_info = "\n".join([f"{i+1}. [{album['name']}]({album['url']}) - {album['artist']['#text']} | Plays: {album['playcount']}" for i, album in enumerate(top_albums)])
+        album_info = "\n".join([f"{i+1}. [{album['name']}]({album['url']}) - {album['artist']['#text']} • {album['playcount']}" for i, album in enumerate(top_albums)])
         lb = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}\n\nTotal Play Count: {total_play_count}"
         await ctx.respond(lb, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
         
@@ -219,7 +219,7 @@ class LastfmPlugin(plugin.Plugin):
         total_play_count = sum(int(track['playcount']) for track in top_tracks)
 
         # Prepare a message with top 10 track information as a numbered list
-        track_info = "\n".join([f"{i+1}. [{track['name']}]({track['url']}) - {track['artist']['#text']} | Plays: {track['playcount']}" for i, track in enumerate(top_tracks)])
+        track_info = "\n".join([f"{i+1}. [{track['name']}]({track['url']}) - {track['artist']['#text']} • {track['playcount']}" for i, track in enumerate(top_tracks)])
 
         tm = f"Weekly Track for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{track_info}\n\nTotal Play Count: {total_play_count}"
 
@@ -276,13 +276,13 @@ class LastfmPlugin(plugin.Plugin):
 
         item_info = ""
         if top_option == 'tracks':
-            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} | Plays: {item['playcount']}" for item in top_items])
-            message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{item_info}"
+            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} • {item['playcount']}" for item in top_items])
+            message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
         elif top_option == 'artists':
-            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) | Plays: {item['playcount']}" for item in top_items])
-            message = f"Top Artists for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{item_info}"
+            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) • {item['playcount']}" for item in top_items])
+            message = f"Top Artists for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
         else:  # top_option == 'albums'
-            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} | Plays: {item['playcount']}" for item in top_items])
-            message = f"Top Albums for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{item_info}"
+            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} • {item['playcount']}" for item in top_items])
+            message = f"Top Albums for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
