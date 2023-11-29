@@ -224,3 +224,41 @@ class LastfmPlugin(plugin.Plugin):
         tm = f"Weekly Track for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{track_info}\n\nTotal Play Count: {total_play_count}"
 
         await ctx.respond(tm, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+
+    @command.filters(filters.private | filters.group, aliases=["tt"])
+    async def cmd_top(self, ctx: command.Context) -> None:
+        """Show the user's top tracks based on time range."""
+        time_range_arg = ctx.args[0].lower() if len(ctx.args) > 0 else 'overall'
+
+        valid_time_ranges = ['overall', '7day', '1month', '3month', '6month', '12month']
+        if time_range_arg not in valid_time_ranges:
+            await ctx.respond("Invalid time range. Please use one of the following: overall, 7day, 1month, 3month, 6month, 12month.")
+            return
+
+        lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+
+        if not lastfm_username:
+            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
+            return
+
+        lastfm_api_key = self.bot.config.LASTFM_API_KEY
+
+        url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+        response = requests.get(url)
+        data = json.loads(response.text)
+
+        if "error" in data:
+            await ctx.respond("An error occurred while retrieving top tracks. Please try again later.")
+            return
+
+        tracks = data.get('toptracks', {}).get('track', [])
+        top_tracks = tracks[:10]
+
+        if not top_tracks:
+            await ctx.respond(f"No top tracks found for the specified time range '{time_range_arg}'")
+            return
+
+        track_info = "\n\n".join([f"🎵 Track: [{track['name']}]({track['url']})\n🎙 Artist: {track['artist']['name']} | Plays: {track['playcount']}" for track in top_tracks])
+        message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{track_info}"
+
+        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
