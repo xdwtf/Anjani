@@ -258,7 +258,7 @@ class LastfmPlugin(plugin.Plugin):
             await ctx.respond(f"No top tracks found for the specified time range '{time_range_arg}'")
             return
 
-        track_info = "\n\n".join([f"🎵 Track: [{track['name']}]({track['url']})\n🎙 Artist: {track['artist']['name']} | Plays: {track['playcount']}" for track in top_tracks])
+        track_info = "\n\n".join([f"[{track['name']}]({track['url']}) - {track['artist']['name']} | Plays: {track['playcount']}" for track in top_tracks])
         message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{track_info}"
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
