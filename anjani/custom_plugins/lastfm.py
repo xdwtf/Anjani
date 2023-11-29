@@ -170,9 +170,10 @@ class LastfmPlugin(plugin.Plugin):
 
         # Get top 10 albums or less if albums are fewer than 10
         top_albums = albums[:10]
+        total_play_count = sum(int(albums['playcount']) for track in top_tracks)
         # Prepare a message with top 10 album information as a numbered list
         album_info = "\n".join([f"{i+1}. [{album['name']}]({album['url']}) - {album['artist']['#text']} | Plays: {album['playcount']}" for i, album in enumerate(top_albums)])
-        lb = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}"
+        lb = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}\n\nTotal Play Count: {total_play_count}"
         await ctx.respond(lb, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
         
     @command.filters(filters.private | filters.group, aliases=["lt"])
@@ -215,10 +216,11 @@ class LastfmPlugin(plugin.Plugin):
 
         # Get top 10 tracks or less if tracks are fewer than 10
         top_tracks = tracks[:10]
+        total_play_count = sum(int(track['playcount']) for track in top_tracks)
 
         # Prepare a message with top 10 track information as a numbered list
         track_info = "\n".join([f"{i+1}. [{track['name']}]({track['url']}) - {track['artist']['#text']} | Plays: {track['playcount']}" for i, track in enumerate(top_tracks)])
 
-        tm = f"Weekly Track for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{track_info}"
+        tm = f"Weekly Track for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{track_info}\n\nTotal Play Count: {total_play_count}"
 
         await ctx.respond(tm, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
