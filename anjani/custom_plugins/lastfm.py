@@ -227,10 +227,20 @@ class LastfmPlugin(plugin.Plugin):
 
     @command.filters(filters.private | filters.group, aliases=["tt"])
     async def cmd_top(self, ctx: command.Context) -> None:
-        """Show the user's top tracks based on time range."""
-        time_range_arg = ctx.args[0].lower() if len(ctx.args) > 0 else 'overall'
-
+        """Show the user's top tracks, artists, or albums based on time range."""
+        valid_top_options = ['tracks', 'artists', 'albums']
         valid_time_ranges = ['overall', '7day', '1month', '3month', '6month', '12month']
+
+        if len(ctx.args) < 1:
+            await ctx.respond("Please provide either 'tracks', 'artists', or 'albums' as the first argument.")
+            return
+
+        top_option = ctx.args[0].lower()
+        if top_option not in valid_top_options:
+            await ctx.respond("Invalid option. Please use either 'tracks', 'artists', or 'albums'.")
+            return
+
+        time_range_arg = ctx.args[1].lower() if len(ctx.args) > 1 else 'overall'
         if time_range_arg not in valid_time_ranges:
             await ctx.respond("Invalid time range. Please use one of the following: overall, 7day, 1month, 3month, 6month, 12month.")
             return
@@ -243,22 +253,36 @@ class LastfmPlugin(plugin.Plugin):
 
         lastfm_api_key = self.bot.config.LASTFM_API_KEY
 
-        url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+        if top_option == 'tracks':
+            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+        elif top_option == 'artists':
+            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+        else:  # top_option == 'albums'
+            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettopalbums&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+
         response = requests.get(url)
         data = json.loads(response.text)
 
         if "error" in data:
-            await ctx.respond("An error occurred while retrieving top tracks. Please try again later.")
+            await ctx.respond("An error occurred while retrieving top data. Please try again later.")
             return
 
-        tracks = data.get('toptracks', {}).get('track', [])
-        top_tracks = tracks[:10]
+        top_items = data.get('toptracks', {}).get('track', []) if top_option == 'tracks' else data.get('topartists', {}).get('artist', []) if top_option == 'artists' else data.get('topalbums', {}).get('album', [])
+        top_items = top_items[:10]
 
-        if not top_tracks:
-            await ctx.respond(f"No top tracks found for the specified time range '{time_range_arg}'")
+        if not top_items:
+            await ctx.respond(f"No top {top_option} found for the specified time range '{time_range_arg}'")
             return
 
-        track_info = "\n\n".join([f"[{track['name']}]({track['url']}) - {track['artist']['name']} | Plays: {track['playcount']}" for track in top_tracks])
-        message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{track_info}"
+        item_info = ""
+        if top_option == 'tracks':
+            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} | Plays: {item['playcount']}" for item in top_items])
+            message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{item_info}"
+        elif top_option == 'artists':
+            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) | Plays: {item['playcount']}" for item in top_items])
+            message = f"Top Artists for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{item_info}"
+        else:  # top_option == 'albums'
+            item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} | Plays: {item['playcount']}" for item in top_items])
+            message = f"Top Albums for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()} Time Range:\n\n{item_info}"
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
