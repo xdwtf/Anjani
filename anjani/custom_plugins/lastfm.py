@@ -131,3 +131,46 @@ class LastfmPlugin(plugin.Plugin):
         message += f"\n📈 Total Listens: {total_listens}"
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+
+    @command.filters(filters.private | filters.group, aliases=["la"])
+    async def cmd_albums(self, ctx: command.Context) -> None:
+        """Show the user's top 10 albums from the weekly album chart on Last.fm"""
+        lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+
+        if not lastfm_username:
+            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
+            return
+
+        lastfm_api_key = self.bot.config.LASTFM_API_KEY
+
+        # Prepare the URL for fetching the weekly album chart
+        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getweeklyalbumchart&user={lastfm_username}&api_key={lastfm_api_key}&format=json"
+
+        # Send a GET request to fetch the data
+        response = requests.get(url)
+        data = json.loads(response.text)
+
+        # Check for errors in the response
+        if "error" in data:
+            await ctx.respond("An error occurred while retrieving the weekly album chart. Please try again later.")
+            return
+
+        # Extract 'from' and 'to' timestamps
+        from_timestamp = int(data.get('weeklyalbumchart', {}).get('@attr', {}).get('from', 0))
+        to_timestamp = int(data.get('weeklyalbumchart', {}).get('@attr', {}).get('to', 0))
+        # Convert timestamps to dates
+        from_date = datetime.datetime.fromtimestamp(from_timestamp).strftime('%d-%m-%Y')
+        to_date = datetime.datetime.fromtimestamp(to_timestamp).strftime('%d-%m-%Y')
+        # Process the retrieved data and extract top 10 album information
+        albums = data.get('weeklyalbumchart', {}).get('album', [])
+
+        if not albums:
+            await ctx.respond("No albums found in the weekly chart.")
+            return
+
+        # Get top 10 albums or less if albums are fewer than 10
+        top_albums = albums[:10]
+        # Prepare a message with top 10 album information as a numbered list
+        album_info = "\n".join([f"{i+1}. [{album['name']}]({album['url']}) - {album['artist']['#text']} | Plays: {album['playcount']}" for i, album in enumerate(top_albums)])
+        message = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}"
+        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
