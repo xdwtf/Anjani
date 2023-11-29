@@ -132,7 +132,7 @@ class LastfmPlugin(plugin.Plugin):
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
 
-    @command.filters(filters.private | filters.group, aliases=["la"])
+    @command.filters(filters.private | filters.group)
     async def cmd_albums(self, ctx: command.Context) -> None:
         """Show the user's top 10 albums from the weekly album chart on Last.fm"""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
@@ -170,13 +170,13 @@ class LastfmPlugin(plugin.Plugin):
 
         # Get top 10 albums or less if albums are fewer than 10
         top_albums = albums[:10]
-        total_play_count = sum(int(albums['playcount']) for track in top_tracks)
+        total_play_count = sum(int(albums['playcount']) for albums in top_albums)
         # Prepare a message with top 10 album information as a numbered list
         album_info = "\n".join([f"{i+1}. [{album['name']}]({album['url']}) - {album['artist']['#text']} | Plays: {album['playcount']}" for i, album in enumerate(top_albums)])
         lb = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}\n\nTotal Play Count: {total_play_count}"
         await ctx.respond(lb, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
         
-    @command.filters(filters.private | filters.group, aliases=["lt"])
+    @command.filters(filters.private | filters.group)
     async def cmd_tracks(self, ctx: command.Context) -> None:
         """Show the user's top 10 tracks from the weekly track chart on Last.fm"""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
