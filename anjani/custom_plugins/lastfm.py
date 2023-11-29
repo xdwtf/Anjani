@@ -172,5 +172,53 @@ class LastfmPlugin(plugin.Plugin):
         top_albums = albums[:10]
         # Prepare a message with top 10 album information as a numbered list
         album_info = "\n".join([f"{i+1}. [{album['name']}]({album['url']}) - {album['artist']['#text']} | Plays: {album['playcount']}" for i, album in enumerate(top_albums)])
-        message = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}"
-        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        lb = f"Weekly Album for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{album_info}"
+        await ctx.respond(lb, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        
+    @command.filters(filters.private | filters.group, aliases=["lt"])
+    async def cmd_tracks(self, ctx: command.Context) -> None:
+        """Show the user's top 10 tracks from the weekly track chart on Last.fm"""
+        lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+
+        if not lastfm_username:
+            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
+            return
+
+        lastfm_api_key = self.bot.config.LASTFM_API_KEY
+
+        # Prepare the URL for fetching the weekly track chart
+        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getweeklytrackchart&user={lastfm_username}&api_key={lastfm_api_key}&format=json"
+
+        # Send a GET request to fetch the data
+        response = requests.get(url)
+        data = json.loads(response.text)
+
+        # Check for errors in the response
+        if "error" in data:
+            await ctx.respond("An error occurred while retrieving the weekly track chart. Please try again later.")
+            return
+
+        # Extract 'from' and 'to' timestamps
+        from_timestamp = int(data.get('weeklytrackchart', {}).get('@attr', {}).get('from', 0))
+        to_timestamp = int(data.get('weeklytrackchart', {}).get('@attr', {}).get('to', 0))
+
+        # Convert timestamps to dates
+        from_date = datetime.datetime.fromtimestamp(from_timestamp).strftime('%d-%m-%Y')
+        to_date = datetime.datetime.fromtimestamp(to_timestamp).strftime('%d-%m-%Y')
+
+        # Process the retrieved data and extract top 10 track information
+        tracks = data.get('weeklytrackchart', {}).get('track', [])
+
+        if not tracks:
+            await ctx.respond("No tracks found in the weekly chart.")
+            return
+
+        # Get top 10 tracks or less if tracks are fewer than 10
+        top_tracks = tracks[:10]
+
+        # Prepare a message with top 10 track information as a numbered list
+        track_info = "\n".join([f"{i+1}. [{track['name']}]({track['url']}) - {track['artist']['#text']} | Plays: {track['playcount']}" for i, track in enumerate(top_tracks)])
+
+        tm = f"Weekly Track for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n({from_date} to {to_date}):\n\n{track_info}"
+
+        await ctx.respond(tm, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
