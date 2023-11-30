@@ -382,7 +382,7 @@ class LastfmPlugin(plugin.Plugin):
 
             if lastfm_period is None:
                 available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
-               await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
+                await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
                 return
 
             valid_sizes = ["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"]
@@ -390,7 +390,7 @@ class LastfmPlugin(plugin.Plugin):
                 await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
                 return
 
-           chart_data = generate_lastfm_album_chart(lastfm_api_key, lastfm_username, size.lower(), lastfm_period.lower()))
+            chart_data = generate_lastfm_album_chart(lastfm_api_key, lastfm_username, size.lower(), lastfm_period.lower()))
             uname = ctx.msg.from_user.first_name
             generated_image = generate_lastfm_album_chart_collage(chart_data, uname, size.lower(), lastfm_period.lower())
             if generated_image:
