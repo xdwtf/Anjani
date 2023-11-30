@@ -311,11 +311,6 @@ class LastfmPlugin(plugin.Plugin):
             await ctx.respond("Invalid option. Please use either 'tracks', 'artists', or 'albums'.")
             return
 
-        time_range_arg = ctx.args[1].lower() if len(ctx.args) > 1 else 'overall'
-        if time_range_arg not in valid_time_ranges:
-            await ctx.respond("Invalid time range. Please use one of the following: overall, 7day, 1month, 3month, 6month, 12month.")
-            return
-
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
 
         if not lastfm_username:
@@ -324,12 +319,26 @@ class LastfmPlugin(plugin.Plugin):
 
         lastfm_api_key = self.bot.config.LASTFM_API_KEY
 
+        # Period mapping
+        period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
+        time_range_arg = ctx.args[1].lower() if len(ctx.args) > 1 else 'overall'
+        lastfm_period = period_map.get(time_range_arg, None)  # Check if the provided period is valid
+
+        if lastfm_period is None:
+            available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
+            await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
+            return
+
+        if time_range_arg not in valid_time_ranges:
+            await ctx.respond("Invalid time range. Please use one of the following: overall, 7day, 1month, 3month, 6month, 12month.")
+            return
+
         if top_option == 'tracks':
-            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user={lastfm_username}&period={lastfm_period}&api_key={lastfm_api_key}&format=json&limit=5"
         elif top_option == 'artists':
-            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user={lastfm_username}&period={lastfm_period}&api_key={lastfm_api_key}&format=json&limit=5"
         else:  # top_option == 'albums'
-            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettopalbums&user={lastfm_username}&period={time_range_arg}&api_key={lastfm_api_key}&format=json&limit=5"
+            url = f"https://ws.audioscrobbler.com/2.0/?method=user.gettopalbums&user={lastfm_username}&period={lastfm_period}&api_key={lastfm_api_key}&format=json&limit=5"
 
         response = requests.get(url)
         data = json.loads(response.text)
@@ -348,13 +357,13 @@ class LastfmPlugin(plugin.Plugin):
         item_info = ""
         if top_option == 'tracks':
             item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} • {item['playcount']}" for item in top_items])
-            message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
+            message = f"Top Tracks for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {lastfm_period.capitalize()}\n\n{item_info}"
         elif top_option == 'artists':
             item_info = "\n\n".join([f"[{item['name']}]({item['url']}) • {item['playcount']}" for item in top_items])
-            message = f"Top Artists for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
+            message = f"Top Artists for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {lastfm_period.capitalize()}\n\n{item_info}"
         else:  # top_option == 'albums'
             item_info = "\n\n".join([f"[{item['name']}]({item['url']}) - {item['artist']['name']} • {item['playcount']}" for item in top_items])
-            message = f"Top Albums for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
+            message = f"Top Albums for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {lastfm_period.capitalize()}\n\n{item_info}"
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
 
