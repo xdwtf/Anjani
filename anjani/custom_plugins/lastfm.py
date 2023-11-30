@@ -105,7 +105,7 @@ def generate_lastfm_album_chart_collage(chart_data, uname, size, time_period):
         draw.text(footer_position, footer_text, fill='black', font=footer_font)
 
         #new_img.save('lastfm_album_chart.png')  # Save the generated image
-        output_stream = io.BytesIO()
+        output_stream = BytesIO()
         new_img.save(output_stream, format="PNG")
         output_stream.name = "album_chart.png"
         output_stream.seek(0)
@@ -322,15 +322,12 @@ class LastfmPlugin(plugin.Plugin):
         # Period mapping
         period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
         time_range_arg = ctx.args[1].lower() if len(ctx.args) > 1 else 'overall'
-        lastfm_period = period_map.get(time_range_arg, None)  # Check if the provided period is valid
 
-        if lastfm_period is None:
+        # Validate if the provided period exists in the mapping or is one of the specified valid time ranges
+        lastfm_period = period_map.get(time_range_arg, None)  # Check if the provided period is valid
+        if lastfm_period not in valid_time_ranges:
             available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
             await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
-            return
-
-        if time_range_arg not in valid_time_ranges:
-            await ctx.respond("Invalid time range. Please use one of the following: overall, 7day, 1month, 3month, 6month, 12month.")
             return
 
         if top_option == 'tracks':
