@@ -367,6 +367,8 @@ class LastfmPlugin(plugin.Plugin):
     @command.filters(filters.private | filters.group)
     async def cmd_collage_album(self, ctx: command.Context) -> None:
         """Show a collage of the user's top albums."""
+        chat = ctx.chat.id
+        ie = ctx.message.reply_to_message.id or ctx.message.id
         async with ctx.action(ChatAction.TYPING):
             lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
             lastfm_api_key = self.bot.config.LASTFM_API_KEY
@@ -400,6 +402,6 @@ class LastfmPlugin(plugin.Plugin):
             uname = ctx.msg.from_user.first_name
             generated_image = generate_lastfm_album_chart_collage(chart_data, uname, size.lower(), lastfm_period.lower())
             if generated_image:
-                await ctx.respond_document(document=generated_image)
+                await self.bot.client.send_document(chat, document=generated_image, reply_to_message_id=ie.id)
             else:
                 await ctx.respond("Failed to generate the collage.")
