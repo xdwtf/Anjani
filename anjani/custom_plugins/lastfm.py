@@ -389,7 +389,7 @@ class LastfmPlugin(plugin.Plugin):
             return
 
         uname=ctx.msg.from_user.first_name
-        generated_image = await self.generate_lastfm_album_chart_collage(self, uname=uname, username=lastfm_username, size=size, period)
+        generated_image = await self.generate_lastfm_album_chart_collage(self, uname=uname, username=lastfm_username, size=size, lastfm_period)
 
         if generated_image:
             await ctx.respond_document(document=generated_image)
