@@ -100,8 +100,8 @@ def generate_lastfm_album_chart_collage(chart_data, uname, size, time_period):
         # Add footer
         footer_text = f"{uname} Top Albums {size}"
         footer_font = ImageFont.truetype(custom_font_path, size=16)  # Adjust font size as needed
-        footer_width, footer_height = draw.textsize(footer_text, font=footer_font)
-        footer_position = (width - footer_width) // 2, height + (footer_height // 2)
+        footer_bbox = draw.textbbox((0, 0), footer_text, font=footer_font)
+        footer_position = ((width - footer_bbox[2]) // 2, height + (footer_height // 2))
         draw.text(footer_position, footer_text, fill='black', font=footer_font)
 
         #new_img.save('lastfm_album_chart.png')  # Save the generated image
