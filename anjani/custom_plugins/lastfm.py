@@ -85,6 +85,74 @@ class LastfmPlugin(plugin.Plugin):
         else:
             return None
 
+    async def generate_lastfm_album_chart_collage(self, uname, username, size, time_period):
+        result = await self.generate_lastfm_album_chart(self, username, size, time_period)
+        if result:
+            albums = [(album['name'][:20] + '...' if len(album['name']) > 20 else album['name'], album['image'][-1]['#text'], album['playcount']) for album in result['topalbums']['album']]
+            albums = [(name, image_url, playcount) for name, image_url, playcount in albums if image_url]
+            size_map = {'2x2': (2, 2), '3x3': (3, 3), '4x4': (4, 4), '5x5': (5, 5), '6x6': (6, 6), '7x7': (7, 7), '8x8': (8, 8), '9x9': (9, 9), '10x10': (10, 10)}
+            rows, columns = size_map.get(size)  # Default to 5x5 size
+            # Calculate image width and height based on total items and desired padding
+            padding = 20
+            album_width = 200
+            album_height = 200
+            total_items = len(albums)
+            total_rows = (total_items + columns - 1) // columns
+            width = columns * (album_width + padding) + padding
+            height = total_rows * (album_height + padding) + padding
+
+            img = Image.new('RGB', (width, height), color='white')
+            draw = ImageDraw.Draw(img)
+            custom_font_path = "/app/anjani/custom_plugins/NotoSansMongolian-Regular.ttf"
+
+            displayed_albums = set()  # Keep track of displayed albums to avoid duplicates
+
+            for index, (album_name, album_image_url, playcount) in enumerate(albums):
+                # No need to check again for empty URLs as we filtered those out above
+                try:
+                    response = requests.get(album_image_url)
+                    if response.status_code == 200:
+                        album_image = Image.open(BytesIO(response.content))
+                        album_image.thumbnail((album_width, album_height))  # Resize album image if needed
+
+                        row = index // columns
+                        col = index % columns
+                        offset_x = col * (album_width + padding) + padding
+                        offset_y = row * (album_height + padding) + padding
+
+                        img.paste(album_image, (offset_x, offset_y))
+                        displayed_albums.add(album_name)
+
+                        # Draw text for album title and playcount
+                        title_font = ImageFont.truetype(custom_font_path)  # Use default font
+                        draw.text((offset_x, offset_y + album_height), f"{album_name} {playcount}", fill='black', font=title_font)
+                except Exception as e:
+                    self.log.error(f"Error fetching image for {album_name}: {e}")
+
+            # Create a new image with increased height to accommodate the footer
+            footer_height = 40  # Adjust as needed
+            new_height = height + footer_height
+            new_img = Image.new('RGB', (width, new_height), color='white')
+            new_img.paste(img, (0, 0))  # Paste the original image (with album art grid) onto the new image
+
+            draw = ImageDraw.Draw(new_img)
+            # Add footer
+            footer_text = f"{uname} Top Albums {size}"
+            footer_font = ImageFont.truetype(custom_font_path, size=16)  # Adjust font size as needed
+            footer_width, footer_height = draw.textsize(footer_text, font=footer_font)
+            footer_position = (width - footer_width) // 2, height + (footer_height // 2)
+            draw.text(footer_position, footer_text, fill='black', font=footer_font)
+
+            #new_img.save('lastfm_album_chart.png')  # Save the generated image
+            output_stream = io.BytesIO()
+            new_img.save(output_stream, format="PNG")
+            output_stream.name = "album_chart.png"
+            output_stream.seek(0)
+            return output_stream
+        else:
+            self.log.error("Failed to fetch Last.fm chart data.")
+            return None
+
     @command.filters(filters.private)
     async def cmd_setusername(self, ctx: command.Context) -> None:
         """Set the user's Last.fm username"""
@@ -320,7 +388,7 @@ class LastfmPlugin(plugin.Plugin):
             await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
             return
         
-        generated_image = await self.generate_lastfm_album_chart_collage(self, lastfm_username, size, time_period)
+        generated_image = await self.generate_lastfm_album_chart_collage(self, uname=ctx.msg.from_user.first_name, lastfm_username, size, time_period)
 
         if generated_image:
             await ctx.respond_document(document=generated_image)
