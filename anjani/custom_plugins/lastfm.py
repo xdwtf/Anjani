@@ -175,7 +175,7 @@ class LastfmPlugin(plugin.Plugin):
         to_date = datetime.datetime.fromtimestamp(to_timestamp).strftime('%d-%m-%Y')
 
         # Process the retrieved data and extract top 10 information based on the specified option (tracks or albums)
-        items = data.get(f'weekly{option}chart', {}).get(option[:-1], [])  # Extract either 'track' or 'album'
+        items = data.get(f'weekly{option}chart', {}).get(option, [])
 
         if not items:
             await ctx.respond(f"No {option} found in the weekly chart.")
