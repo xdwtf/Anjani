@@ -12,8 +12,7 @@ from anjani import command, filters, listener, plugin, util
 from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
 
-def generate_lastfm_album_chart(self, username, size, time_period):
-    api_key = self.bot.config.LASTFM_API_KEY
+def generate_lastfm_album_chart(api_key, username, size, time_period):
     base_url = f'http://ws.audioscrobbler.com/2.0/'
     method = 'user.gettopalbums'
 
@@ -46,8 +45,8 @@ def generate_lastfm_album_chart(self, username, size, time_period):
     else:
         return None
 
-def generate_lastfm_album_chart_collage(self, uname, username, size, time_period):
-    result = await self.generate_lastfm_album_chart(self, username, size, time_period)
+def generate_lastfm_album_chart_collage(chart_data, uname, username, size, time_period):
+    result = chart_data
     if result:
         albums = [(album['name'][:20] + '...' if len(album['name']) > 20 else album['name'], album['image'][-1]['#text'], album['playcount']) for album in result['topalbums']['album']]
         albums = [(name, image_url, playcount) for name, image_url, playcount in albums if image_url]
@@ -362,6 +361,7 @@ class LastfmPlugin(plugin.Plugin):
     async def cmd_collage_album(self, ctx: command.Context) -> None:
         """Show a collage of the user's top albums."""
         lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+        lastfm_api_key = self.bot.config.LASTFM_API_KEY
         
         if not lastfm_username:
             await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
@@ -388,8 +388,9 @@ class LastfmPlugin(plugin.Plugin):
             await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
             return
 
+        chart_data = generate_lastfm_album_chart(api_key=lastfm_api_key, username, size, time_period)
         uname = ctx.msg.from_user.first_name
-        generated_image = await generate_lastfm_album_chart_collage(self, uname, lastfm_username, size.lower(), lastfm_period.lower())
+        generated_image = generate_lastfm_album_chart_collage(chart_data, uname, lastfm_username, size.lower(), lastfm_period.lower())
 
         if generated_image:
             await ctx.respond_document(document=generated_image)
