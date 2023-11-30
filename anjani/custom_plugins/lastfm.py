@@ -368,7 +368,7 @@ class LastfmPlugin(plugin.Plugin):
     async def cmd_collage_album(self, ctx: command.Context) -> None:
         """Show a collage of the user's top albums."""
         chat = ctx.chat.id
-        ie = ctx.message.reply_to_message.id or ctx.message.id
+        ie = ctx.msg.reply_to_message or ctx.msg.id
         async with ctx.action(ChatAction.TYPING):
             lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
             lastfm_api_key = self.bot.config.LASTFM_API_KEY
