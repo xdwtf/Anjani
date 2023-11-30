@@ -378,7 +378,7 @@ class LastfmPlugin(plugin.Plugin):
             if len(ctx.args) != 2:
                 available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
                 available_sizes = ", ".join(["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"])
-                await ctx.respond(f"Please provide both period and size grid in the format: /Collage <period> <size>\n\nAvailable periods: {available_periods}\nAvailable sizes: {available_sizes}")
+                await ctx.respond(f"Please provide both period and size grid in the format: //collage_album <period> <size>\n\nAvailable periods: {available_periods}\nAvailable sizes: {available_sizes}")
                 return
 
             period = ctx.args[0]
