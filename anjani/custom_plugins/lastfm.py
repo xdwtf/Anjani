@@ -402,7 +402,7 @@ class LastfmPlugin(plugin.Plugin):
             uname = ctx.msg.from_user.first_name
             generated_image = generate_lastfm_album_chart_collage(chart_data, uname, size.lower(), period.lower())
             if generated_image:
-                caption = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) lastfm_period.lower() Albums" 
+                caption = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) {lastfm_period.lower()} Albums" 
                 await self.bot.client.send_document(chat, document=generated_image, caption=caption, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
             else:
                 await ctx.respond("Failed to generate the collage.")
