@@ -134,7 +134,7 @@ class LastfmPlugin(plugin.Plugin):
 
     @command.filters(filters.private | filters.group)
     async def cmd_weekly(self, ctx: command.Context) -> None:
-        """Show the user's top 10 albums or tracks from the weekly chart on Last.fm"""
+        """Show the user's top 10 tracks or albums from the weekly chart on Last.fm"""
         valid_options = ['tracks', 'albums']
 
         if len(ctx.args) < 1:
@@ -154,8 +154,11 @@ class LastfmPlugin(plugin.Plugin):
 
         lastfm_api_key = self.bot.config.LASTFM_API_KEY
 
-        # Prepare the URLs for fetching the weekly chart based on the provided option (tracks or albums)
-        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getweekly{'track' if option == 'tracks' else 'album'}chart&user={lastfm_username}&api_key={lastfm_api_key}&format=json"
+        # Determine whether to fetch 'track' or 'album' based on the provided option (tracks or albums)
+        chart_type = 'track' if option == 'tracks' else 'album'
+
+        # Prepare the URL for fetching the weekly chart based on the determined chart type
+        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getweekly{chart_type}chart&user={lastfm_username}&api_key={lastfm_api_key}&format=json"
 
         # Send a GET request to fetch the data
         response = requests.get(url)
@@ -167,15 +170,15 @@ class LastfmPlugin(plugin.Plugin):
             return
 
         # Extract 'from' and 'to' timestamps
-        from_timestamp = int(data.get(f'weekly{option}chart', {}).get('@attr', {}).get('from', 0))
-        to_timestamp = int(data.get(f'weekly{option}chart', {}).get('@attr', {}).get('to', 0))
+        from_timestamp = int(data.get(f'weekly{chart_type}chart', {}).get('@attr', {}).get('from', 0))
+        to_timestamp = int(data.get(f'weekly{chart_type}chart', {}).get('@attr', {}).get('to', 0))
 
         # Convert timestamps to dates
         from_date = datetime.datetime.fromtimestamp(from_timestamp).strftime('%d-%m-%Y')
         to_date = datetime.datetime.fromtimestamp(to_timestamp).strftime('%d-%m-%Y')
 
-        # Process the retrieved data and extract top 10 information based on the specified option (tracks or albums)
-        items = data.get(f'weekly{option}chart', {}).get(option, [])
+        # Process the retrieved data and extract top 10 information based on the determined chart type
+        items = data.get(f'weekly{chart_type}chart', {}).get(chart_type, [])
 
         if not items:
             await ctx.respond(f"No {option} found in the weekly chart.")
