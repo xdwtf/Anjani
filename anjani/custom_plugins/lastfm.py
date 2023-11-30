@@ -388,8 +388,8 @@ class LastfmPlugin(plugin.Plugin):
             await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
             return
 
-        uname=ctx.msg.from_user.first_name
-        generated_image = await self.generate_lastfm_album_chart_collage(self, uname=uname, username=lastfm_username, size=size, lastfm_period)
+        uname = ctx.msg.from_user.first_name
+        generated_image = await self.generate_lastfm_album_chart_collage(self, uname, lastfm_username, size.lower(), lastfm_period.lower())
 
         if generated_image:
             await ctx.respond_document(document=generated_image)
