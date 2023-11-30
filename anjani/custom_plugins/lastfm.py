@@ -1,5 +1,7 @@
 """ last.fm Plugin """
 import json, requests, urllib.parse, re, datetime
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
 
 from typing import Any, ClassVar, Mapping, MutableMapping, Optional
 
@@ -48,7 +50,41 @@ class LastfmPlugin(plugin.Plugin):
             user_loved = False
 
         return play_count, user_loved
-    
+
+    async def generate_lastfm_album_chart(self, username, size, time_period):
+        api_key = self.bot.config.LASTFM_API_KEY
+        base_url = f'http://ws.audioscrobbler.com/2.0/'
+        method = 'user.gettopalbums'
+
+        # Translate size into limit parameters (assuming size like 3x3 means 9 albums)
+        size_map = {
+            '2x2': 4, '3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36,
+            '7x7': 49, '8x8': 64, '9x9': 81, '10x10': 100
+        }
+        limit = size_map.get(size, 25)  # Default to 3x3 size
+
+        # Translate time_period into Last.fm period
+        period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
+        period = period_map.get(time_period, '7day')  # Default to weekly
+
+        # Make the Last.fm API request
+        params = {
+            'method': method,
+            'user': username,
+            'api_key': api_key,
+            'format': 'json',
+            'limit': limit,
+            'period': period
+        }
+        response = requests.get(base_url, params=params)
+
+        # Process the response and generate the chart
+        if response.status_code == 200:
+            chart_data = response.json()
+            return chart_data
+        else:
+            return None
+
     @command.filters(filters.private)
     async def cmd_setusername(self, ctx: command.Context) -> None:
         """Set the user's Last.fm username"""
@@ -253,3 +289,40 @@ class LastfmPlugin(plugin.Plugin):
             message = f"Top Albums for [{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) | {time_range_arg.capitalize()}\n\n{item_info}"
 
         await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+
+    @command.filters(filters.private | filters.group)
+    async def cmd_collage_album(self, ctx: command.Context) -> None:
+        """Show a collage of the user's top albums."""
+        lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+        
+        if not lastfm_username:
+            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
+            return
+
+        if len(ctx.args) != 2:
+            available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
+            available_sizes = ", ".join(["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"])
+            await ctx.respond(f"Please provide both period and size grid in the format: /Collage <period> <size>\n\nAvailable periods: {available_periods}\nAvailable sizes: {available_sizes}")
+            return
+
+        period = ctx.args[0]
+        size = ctx.args[1]
+        period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
+        lastfm_period = period_map.get(period.lower(), None)  # Check if the provided period is valid
+
+        if lastfm_period is None:
+            available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
+            await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
+            return
+
+        valid_sizes = ["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"]
+        if size.lower() not in valid_sizes:
+            await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
+            return
+        
+        generated_image = await self.generate_lastfm_album_chart_collage(self, lastfm_username, size, time_period)
+
+        if generated_image:
+            await ctx.respond_document(document=generated_image)
+        else:
+            await ctx.respond("Failed to generate the collage.")
