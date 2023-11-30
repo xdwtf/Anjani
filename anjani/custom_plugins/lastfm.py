@@ -11,6 +11,7 @@ from aiopath import AsyncPath
 from anjani import command, filters, listener, plugin, util
 from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
+from pyrogram.enums.chat_action import ChatAction
 
 def generate_lastfm_album_chart(api_key, username, size, time_period):
     base_url = f'http://ws.audioscrobbler.com/2.0/'
@@ -45,7 +46,7 @@ def generate_lastfm_album_chart(api_key, username, size, time_period):
     else:
         return None
 
-def generate_lastfm_album_chart_collage(chart_data, uname, username, size, time_period):
+def generate_lastfm_album_chart_collage(chart_data, uname, size, time_period):
     result = chart_data
     if result:
         albums = [(album['name'][:20] + '...' if len(album['name']) > 20 else album['name'], album['image'][-1]['#text'], album['playcount']) for album in result['topalbums']['album']]
@@ -360,39 +361,39 @@ class LastfmPlugin(plugin.Plugin):
     @command.filters(filters.private | filters.group)
     async def cmd_collage_album(self, ctx: command.Context) -> None:
         """Show a collage of the user's top albums."""
-        lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
-        lastfm_api_key = self.bot.config.LASTFM_API_KEY
-        
-        if not lastfm_username:
-            await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
-            return
+        async with ctx.action(ChatAction.TYPING):
+            lastfm_username = await self.get_lastfm_username(ctx.msg.from_user.id)
+            lastfm_api_key = self.bot.config.LASTFM_API_KEY
 
-        if len(ctx.args) != 2:
-            available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
-            available_sizes = ", ".join(["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"])
-            await ctx.respond(f"Please provide both period and size grid in the format: /Collage <period> <size>\n\nAvailable periods: {available_periods}\nAvailable sizes: {available_sizes}")
-            return
+            if not lastfm_username:
+                await ctx.respond("Last.fm username not found. Please set your Last.fm username using /setusername in PM")
+                return
 
-        period = ctx.args[0]
-        size = ctx.args[1]
-        period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
-        lastfm_period = period_map.get(period.lower(), None)  # Check if the provided period is valid
+            if len(ctx.args) != 2:
+                available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
+                available_sizes = ", ".join(["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"])
+                await ctx.respond(f"Please provide both period and size grid in the format: /Collage <period> <size>\n\nAvailable periods: {available_periods}\nAvailable sizes: {available_sizes}")
+                return
 
-        if lastfm_period is None:
-            available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
-            await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
-            return
+            period = ctx.args[0]
+            size = ctx.args[1]
+            period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
+            lastfm_period = period_map.get(period.lower(), None)  # Check if the provided period is valid
 
-        valid_sizes = ["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"]
-        if size.lower() not in valid_sizes:
-            await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
-            return
+            if lastfm_period is None:
+                available_periods = ", ".join(["w (weekly)", "m (monthly)", "q (quarterly)", "h (half-yearly)", "y (yearly)", "a (overall)"])
+               await ctx.respond(f"Invalid period provided. Available periods: {available_periods}")
+                return
 
-        chart_data = generate_lastfm_album_chart(api_key=lastfm_api_key, username, size, time_period)
-        uname = ctx.msg.from_user.first_name
-        generated_image = generate_lastfm_album_chart_collage(chart_data, uname, lastfm_username, size.lower(), lastfm_period.lower())
+            valid_sizes = ["2x2", "3x3", "4x4", "5x5", "6x6", "7x7", "8x8", "9x9", "10x10"]
+            if size.lower() not in valid_sizes:
+                await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
+                return
 
-        if generated_image:
-            await ctx.respond_document(document=generated_image)
-        else:
-            await ctx.respond("Failed to generate the collage.")
+           chart_data = generate_lastfm_album_chart(lastfm_api_key, lastfm_username, size.lower(), lastfm_period.lower()))
+            uname = ctx.msg.from_user.first_name
+            generated_image = generate_lastfm_album_chart_collage(chart_data, uname, size.lower(), lastfm_period.lower())
+            if generated_image:
+                await ctx.respond_document(document=generated_image)
+            else:
+                await ctx.respond("Failed to generate the collage.")
