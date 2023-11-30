@@ -26,7 +26,7 @@ def generate_lastfm_album_chart(api_key, username, size, time_period):
 
     # Translate time_period into Last.fm period
     period_map = {'w': '7day', 'm': '1month', 'q': '3month', 'h': '6month', 'y': '12month', 'a': 'overall'}
-    period = period_map.get(time_period, '7day')  # Default to weekly
+    period = period_map.get(time_period)  # Default to weekly
 
     # Make the Last.fm API request
     params = {
