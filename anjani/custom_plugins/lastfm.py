@@ -357,7 +357,7 @@ class LastfmPlugin(plugin.Plugin):
             track_image_url = None  # No image available
 
         tags = data_track_info["track"].get("toptags", {}).get("tag", [])
-        formatted_tags = ", ".join(f"#{tag['name']}" for tag in tags) if tags else "No tags available"
+        formatted_tags = ", ".join(f"#{tag['name'].replace(' ', '_')}" for tag in tags) if tags else "No tags available"
 
         # Constructing the message with the track's image, tags, summary, and other information
         if is_playing:
