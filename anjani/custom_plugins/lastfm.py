@@ -210,8 +210,8 @@ class LastfmPlugin(plugin.Plugin):
         data_recent_tracks = json.loads(response_recent_tracks.text)
 
         if "error" in data_recent_tracks:
-           await ctx.respond("An error occurred while retrieving Last.fm data. Please try again later.")
-           return
+            await ctx.respond("An error occurred while retrieving Last.fm data. Please try again later.")
+            return
 
         track = data_recent_tracks["recenttracks"]["track"][0]
         artist = track["artist"]["#text"]
@@ -225,18 +225,19 @@ class LastfmPlugin(plugin.Plugin):
         data_track_info = json.loads(response_track_info.text)
 
         # Extracting the track's image URL if available
-        album_images = data_track_info["track"]["album"].get("image", [])
+        track_info = data_track_info.get("track", {})
+        album_images = track_info.get("album", {}).get("image", [])
         if album_images:
             # Selecting the largest available image size
             track_image_url = next((img["#text"] for img in reversed(album_images)), None)
         else:
             track_image_url = None  # No image available
 
-        # Extracting tags if available
         tags = data_track_info["track"].get("toptags", {}).get("tag", [])
         formatted_tags = ", ".join(f"#{tag['name']}" for tag in tags) if tags else "No tags available"
+        track_summary = track_info.get("wiki", {}).get("summary", None)
 
-        # Constructing the message with the track's image, tags, and other information
+        # Constructing the message with the track's image, tags, summary, and other information
         if is_playing:
             message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\n🎵 Title: [{title}](https://open.spotify.com/search/{urllib.parse.quote(title)}%20{urllib.parse.quote(artist)})\n🎙 Artist: {artist}"
         else:
@@ -249,22 +250,23 @@ class LastfmPlugin(plugin.Plugin):
 
         if play_count > 0:
             message += f"\n🎧 Play Count: {play_count}"
-    
-        if formatted_tags != "No tags available": 
-            message += f"\n🔖 Tags: {formatted_tags}"
-            
-        message += f"\n📈 Total Listens: {total_listens}"
 
-        # Adding the track image URL and tags to the message
+        if formatted_tags != "No tags available":
+            message += f"\n🔖 Tags: {formatted_tags}"
+        message += f"\n\n📈 Total Listens: {total_listens}"
+
+        # Include the summary if available
+        if track_summary:
+            message += f"\n\nℹ️ Summary:\n{track_summary}"
+
+        # Adding the track image URL to the message if available
         if track_image_url:
-            # Send photo if an image is available
             image_name = f"{artist}_{title.replace(' ', '_')}.jpg"
             response_image = requests.get(track_image_url)
             image_content = BytesIO(response_image.content)
             image_content.name = image_name
             await ctx.respond(message, photo=image_content, parse_mode=ParseMode.MARKDOWN)
         else:
-            # Otherwise, send the message without an image
             await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
 
     @command.filters(filters.private | filters.group)
