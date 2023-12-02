@@ -234,7 +234,7 @@ class LastfmPlugin(plugin.Plugin):
 
         # Extracting tags if available
         tags = data_track_info["track"].get("toptags", {}).get("tag", [])
-        formatted_tags = ", ".join(tag["name"] for tag in tags) if tags else "No tags available"
+        formatted_tags = ", ".join(f"#{tag['name']}" for tag in tags) if tags else "No tags available"
 
         # Constructing the message with the track's image, tags, and other information
         if is_playing:
@@ -250,6 +250,9 @@ class LastfmPlugin(plugin.Plugin):
         if play_count > 0:
             message += f"\n🎧 Play Count: {play_count}"
     
+        if formatted_tags != "No tags available": 
+            message += f"\n🔖 Tags: {formatted_tags}"
+            
         message += f"\n📈 Total Listens: {total_listens}"
 
         # Adding the track image URL and tags to the message
