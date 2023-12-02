@@ -205,20 +205,38 @@ class LastfmPlugin(plugin.Plugin):
 
         lastfm_api_key = self.bot.config.LASTFM_API_KEY
 
-        url = f"https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={lastfm_username}&api_key={lastfm_api_key}&format=json&limit=1"
-        response = requests.get(url)
-        data = json.loads(response.text)
+        url_recent_tracks = f"https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={lastfm_username}&api_key={lastfm_api_key}&format=json&limit=1"
+        response_recent_tracks = requests.get(url_recent_tracks)
+        data_recent_tracks = json.loads(response_recent_tracks.text)
 
-        if "error" in data:
-            await ctx.respond("An error occurred while retrieving Last.fm data. Please try again later.")
-            return
+        if "error" in data_recent_tracks:
+           await ctx.respond("An error occurred while retrieving Last.fm data. Please try again later.")
+           return
 
-        track = data["recenttracks"]["track"][0]
+        track = data_recent_tracks["recenttracks"]["track"][0]
         artist = track["artist"]["#text"]
         title = track["name"]
-        total_listens = int(data["recenttracks"]["@attr"]["total"])
+        total_listens = int(data_recent_tracks["recenttracks"]["@attr"]["total"])
         is_playing = "@attr" in track and track["@attr"]["nowplaying"] == "true"
 
+        # Fetching track info including the image and tags
+        url_track_info = f"https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key={lastfm_api_key}&artist={urllib.parse.quote(artist)}&track={urllib.parse.quote(title)}&format=json"
+        response_track_info = requests.get(url_track_info)
+        data_track_info = json.loads(response_track_info.text)
+
+        # Extracting the track's image URL if available
+        album_images = data_track_info["track"]["album"].get("image", [])
+        if album_images:
+            # Selecting the largest available image size
+            track_image_url = next((img["#text"] for img in reversed(album_images)), None)
+        else:
+            track_image_url = None  # No image available
+
+        # Extracting tags if available
+        tags = data_track_info["track"].get("toptags", {}).get("tag", [])
+        formatted_tags = ", ".join(tag["name"] for tag in tags) if tags else "No tags available"
+
+        # Constructing the message with the track's image, tags, and other information
         if is_playing:
             message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) is currently listening to:\n\n🎵 Title: [{title}](https://open.spotify.com/search/{urllib.parse.quote(title)}%20{urllib.parse.quote(artist)})\n🎙 Artist: {artist}"
         else:
@@ -231,10 +249,20 @@ class LastfmPlugin(plugin.Plugin):
 
         if play_count > 0:
             message += f"\n🎧 Play Count: {play_count}"
-        
+    
         message += f"\n📈 Total Listens: {total_listens}"
 
-        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        # Adding the track image URL and tags to the message
+        if track_image_url:
+            # Send photo if an image is available
+            image_name = f"{artist}_{title.replace(' ', '_')}.jpg"
+            response_image = requests.get(track_image_url)
+            image_content = BytesIO(response_image.content)
+            image_content.name = image_name
+            await ctx.respond(message, photo=image_content, parse_mode=ParseMode.MARKDOWN)
+        else:
+            # Otherwise, send the message without an image
+            await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
 
     @command.filters(filters.private | filters.group)
     async def cmd_weekly(self, ctx: command.Context) -> None:
