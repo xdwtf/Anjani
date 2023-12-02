@@ -22,7 +22,7 @@ def create_custom_image(track_picture_url, upfp, track_name, artist_name):
     # Open the profile picture (pfp) image and resize it as circular
     #pfp = Image.open('/app/anjani/custom_plugins/pfp.jpg')
     pfp = Image.open(upfp)
-    pfp = pfp.resize((music_cover.width // 9, music_cover.width // 9))
+    pfp = pfp.resize((music_cover.width // 4, music_cover.width // 4))
 
     # Create a circular mask image with the same size as pfp
     mask = Image.new('L', pfp.size, 0)
@@ -119,12 +119,7 @@ def create_custom_image(track_picture_url, upfp, track_name, artist_name):
     text_color = get_text_color(bg_color)
 
     # Draw each line of text with the determined text color
-    for line in lines:
-        text_bbox = draw.textbbox((x_offset, text_y), line, font=font)
-        text_width = text_bbox[2] - text_bbox[0]
-        text_x = (output_image.width - text_width) // 2
-        draw.text((text_x, text_y), line, font=font, fill=text_color)
-        text_y += line_height
+    draw.text((text_x, text_y), text, font=font, fill=text_color)
 
     # Save the final image
     #output_image.save('xy.png')
