@@ -315,7 +315,11 @@ class LastfmPlugin(plugin.Plugin):
         registered_unixtime = int(data['user']['registered']['unixtime'])
         dt = datetime.datetime.fromtimestamp(registered_unixtime)
         message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n\nListens: {playcount}\nArtists: {artistcount}\nTracks: {trackcount}\nAlbums: {albumcount}\n\nSince: {dt}"
-        await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        if 'image' in data['user'] and data['user']['image']:
+            user_image = data['user']['image'][0]['#text']  # Accessing the first image URL
+            await ctx.respond(photo=user_image, caption=message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+        else:
+            await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
     
     @command.filters(filters.private | filters.group, aliases=["s"])
     async def cmd_status(self, ctx: command.Context) -> None:
