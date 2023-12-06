@@ -316,7 +316,7 @@ class LastfmPlugin(plugin.Plugin):
         dt = datetime.datetime.fromtimestamp(registered_unixtime)
         message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n\nListens: {playcount}\nArtists: {artistcount}\nTracks: {trackcount}\nAlbums: {albumcount}\n\nSince: {dt}"
         if 'image' in data['user'] and data['user']['image']:
-            user_image = data['user']['image'][0]['#text']  # Accessing the first image URL
+            user_image = data['user']['image'][-1]['#text']
             await ctx.respond(photo=user_image, caption=message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
         else:
             await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
