@@ -13,6 +13,7 @@ from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
 from pyrogram.enums.parse_mode import ParseMode
 from pyrogram.enums.chat_action import ChatAction
 
+from .clast import create_album_chart
 
 def create_custom_image(track_picture_url, upfp, track_name, artist_name):
     # Fetch the image from the URL
@@ -557,9 +558,8 @@ class LastfmPlugin(plugin.Plugin):
                 await ctx.respond(f"Invalid size grid provided. Available size grids: {', '.join(valid_sizes)}")
                 return
 
-            chart_data = generate_lastfm_album_chart(lastfm_api_key, lastfm_username, size.lower(), period.lower())
             uname = ctx.msg.from_user.first_name
-            generated_image = generate_lastfm_album_chart_collage(chart_data, uname, size.lower(), period.lower())
+            generated_image = await create_album_chart(lastfm_api_key, lastfm_username, lastfm_period.lower(), size.lower())
             if generated_image:
                 caption = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id}) {lastfm_period.lower()} Albums" 
                 await self.bot.client.send_document(chat, document=generated_image, caption=caption, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
