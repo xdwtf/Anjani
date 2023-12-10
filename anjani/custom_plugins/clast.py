@@ -11,7 +11,7 @@ ALBUM_COVER_SIZE = (300, 300)
 
 
 class Fetcher:
-    def __init__(self, user: str, period: str, chart_shape: str):
+    def __init__(self, lastfm_api_key: str, user: str, period: str, chart_shape: str):
         self.client = lastfm.Client(lastfm_api_key)
         self.user = user
         try:
@@ -129,7 +129,7 @@ class Chart:
 async def create_album_chart(lastfm_api_key, lastfm_user, period, chart_shape):
     client = lastfm.Client(lastfm_api_key)
     try:
-        fetcher = Fetcher(lastfm_user, period, chart_shape)
+        fetcher = Fetcher(lastfm_api_key, lastfm_user, period, chart_shape)
     except ValueError as e:
         return str(e)
     finally:
