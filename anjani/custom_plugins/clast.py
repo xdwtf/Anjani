@@ -79,20 +79,40 @@ class Chart:
 
 
     def make_chart(self) -> bytes:
-        chart = Image.new("RGB", self.size)
-        for album in self.albums:
+        chart = None
+        current_position = self.position  # Store the initial position
+        albums_with_images = [album for album in self.albums if self._get_album_cover(album).mode == 'RGB']
+
+        num_albums = len(albums_with_images)
+        if num_albums == 0:
+            return b''  # Return an empty image if there are no albums with images
+
+        # Calculate the number of columns needed for the available albums
+        num_cols = min(num_albums, self.size[0] // ALBUM_COVER_SIZE[0])
+        num_rows = -(-num_albums // num_cols)
+
+        # Calculate the actual size needed for the chart based on available albums
+        actual_chart_size = (
+            num_cols * ALBUM_COVER_SIZE[0],
+            num_rows * ALBUM_COVER_SIZE[1]
+        )
+
+        # Create a new image with the adjusted size
+        chart = Image.new("RGB", actual_chart_size)
+
+        for album in albums_with_images:
             album_cover = self._get_album_cover(album)
             album_cover = self._write_album_info(album, album_cover)
+            chart.paste(album_cover, current_position)
 
-            chart.paste(album_cover, self.position)
+            current_position = list(current_position)
+            current_position[0] += ALBUM_COVER_SIZE[0]
 
-            self.position = list(self.position)
-            if self.position[0] == self.size[0] - ALBUM_COVER_SIZE[0]:
-                self.position[0] = 0
-                self.position[1] += ALBUM_COVER_SIZE[1]
-            else:
-                self.position[0] += ALBUM_COVER_SIZE[0]
-            self.position = tuple(self.position)
+            if (albums_with_images.index(album) + 1) % num_cols == 0:
+                current_position[0] = 0
+                current_position[1] += ALBUM_COVER_SIZE[1]
+
+            current_position = tuple(current_position)
 
         chart_byte_arr = BytesIO()
         chart.save(chart_byte_arr, "jpeg")
