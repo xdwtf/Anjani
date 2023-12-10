@@ -16,11 +16,18 @@ class Fetcher:
         self.user = user
         try:
             self.period = period
-            self.chart_shape = chart_shape
+            self.chart_shape = self._parse_chart_shape(chart_shape)
         except ValueError as e:
             raise e
         self.albums_number = self._calculate_albums_number()
         self.chart_size = self._calculate_chart_size()
+
+    def _parse_chart_shape(self, chart_shape) -> tuple[int, int]:
+        chart_shape = chart_shape.lower()
+        if re.match(r"(\d+)x(\d+)", chart_shape):
+            return tuple(map(int, chart_shape.split("x")))
+        else:
+            raise ValueError("Invalid chart shape")
 
     def _calculate_albums_number(self) -> int:
         return self.chart_shape[0] * self.chart_shape[1]
@@ -33,7 +40,7 @@ class Fetcher:
 
     async def fetch(self) -> dict:
         user_top_albums = await self.client.user_get_top_albums(
-            self.user, self.period, limit=self.albums_number
+            self.user, self.period, limit=200
         )
         return user_top_albums
 
@@ -79,26 +86,9 @@ class Chart:
 
 
     def make_chart(self) -> bytes:
-        chart = None
+        chart = Image.new("RGB", self.size)
         current_position = self.position  # Store the initial position
         albums_with_images = [album for album in self.albums if self._get_album_cover(album).mode == 'RGB']
-
-        num_albums = len(albums_with_images)
-        if num_albums == 0:
-            return b''  # Return an empty image if there are no albums with images
-
-        # Calculate the number of columns needed for the available albums
-        num_cols = min(num_albums, self.size[0] // ALBUM_COVER_SIZE[0])
-        num_rows = -(-num_albums // num_cols)
-
-        # Calculate the actual size needed for the chart based on available albums
-        actual_chart_size = (
-            num_cols * ALBUM_COVER_SIZE[0],
-            num_rows * ALBUM_COVER_SIZE[1]
-        )
-
-        # Create a new image with the adjusted size
-        chart = Image.new("RGB", actual_chart_size)
 
         for album in albums_with_images:
             album_cover = self._get_album_cover(album)
@@ -106,12 +96,11 @@ class Chart:
             chart.paste(album_cover, current_position)
 
             current_position = list(current_position)
-            current_position[0] += ALBUM_COVER_SIZE[0]
-
-            if (albums_with_images.index(album) + 1) % num_cols == 0:
+            if current_position[0] == self.size[0] - ALBUM_COVER_SIZE[0]:
                 current_position[0] = 0
                 current_position[1] += ALBUM_COVER_SIZE[1]
-
+            else:
+                current_position[0] += ALBUM_COVER_SIZE[0]
             current_position = tuple(current_position)
 
         chart_byte_arr = BytesIO()
