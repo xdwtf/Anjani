@@ -12,7 +12,7 @@ ALBUM_COVER_SIZE = (300, 300)
 
 class Fetcher:
     def __init__(self, user: str, period: str, chart_shape: str):
-        self.client = lastfm.Client(LASTFM_API_KEY)
+        self.client = lastfm.Client(lastfm_api_key)
         self.user = user
         try:
             self.period = period
