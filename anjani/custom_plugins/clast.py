@@ -15,32 +15,12 @@ class Fetcher:
         self.client = lastfm.Client(LASTFM_API_KEY)
         self.user = user
         try:
-            self.period = self._parse_period(period)
-            self.chart_shape = self._parse_chart_shape(chart_shape)
+            self.period = period
+            self.chart_shape = chart_shape
         except ValueError as e:
             raise e
         self.albums_number = self._calculate_albums_number()
         self.chart_size = self._calculate_chart_size()
-
-    def _parse_period(self, period) -> str:
-        period = period.lower()
-        if period == "week":
-            return "7day"
-        elif period == "month":
-            return "1month"
-        elif period == "year":
-            return "12month"
-        elif period == "overall":
-            return "overall"
-        else:
-            raise ValueError("Invalid chart period")
-
-    def _parse_chart_shape(self, chart_shape) -> tuple[int, int]:
-        chart_shape = chart_shape.lower()
-        if re.match(r"(\d+)x(\d+)", chart_shape):
-            return tuple(map(int, chart_shape.split("x")))
-        else:
-            raise ValueError("Invalid chart shape")
 
     def _calculate_albums_number(self) -> int:
         return self.chart_shape[0] * self.chart_shape[1]
@@ -126,7 +106,7 @@ async def create_album_chart(lastfm_api_key, lastfm_user, period, chart_shape):
     except ValueError as e:
         return str(e)
     finally:
-        print("done")
+        pass
 
     try:
         user_top_albums = await fetcher.fetch()
