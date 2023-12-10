@@ -965,6 +965,17 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
+name = "lastfm-py"
+version = "0.0.12"
+description = "An asynchronous LastFM API wrapper"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "lastfm-py-0.0.12.tar.gz", hash = "sha256:4fd201c96d12854cf72af1e6157d0df20da327f00e892e7945673ffa264bf67f"},
+]
+
+[[package]]
 name = "markupsafe"
 version = "2.1.3"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -2346,4 +2357,4 @@ uvloop = ["uvloop"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.9"
-content-hash = "0c25e94be68b7d445292a878152861893a1f030f597de78c9443ae24d089a36a"
+content-hash = "34be3e0b8726dfb408909abda23213727661a89f7201b13d554b36a0f3b410bc"
