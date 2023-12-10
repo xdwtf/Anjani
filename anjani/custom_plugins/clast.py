@@ -115,8 +115,15 @@ class Chart:
             current_position = tuple(current_position)
 
         chart_byte_arr = BytesIO()
-        chart.save(chart_byte_arr, "jpeg")
-        return chart_byte_arr.getvalue()
+        chart.save(chart_byte_arr, "PNG")
+
+        # Set the name attribute for in-memory upload
+        chart_byte_arr.name = "custom_image.png"
+
+        # Reset the stream position to the beginning
+        chart_byte_arr.seek(0)
+
+        return chart_byte_arr
 
 
 async def create_album_chart(lastfm_api_key, lastfm_user, period, chart_shape):
