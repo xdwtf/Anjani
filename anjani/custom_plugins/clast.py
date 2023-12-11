@@ -94,11 +94,23 @@ class Chart:
         if num_albums == 0:
             return b''  # Return an empty image if there are no albums with images
 
-        # Calculate the number of columns needed for the available albums
-        num_cols = min(num_albums, self.size[0] // ALBUM_COVER_SIZE[0])
-        num_rows = -(-num_albums // num_cols)
+        # Calculate the number of columns and rows that can fit within the original requested chart size
+        num_cols_original = self.size[0] // ALBUM_COVER_SIZE[0]
+        num_rows_original = self.size[1] // ALBUM_COVER_SIZE[1]
 
-        # Calculate the actual size needed for the chart based on available albums
+        # Calculate the maximum number of albums that can fit within the original requested chart size
+        max_albums_original = num_cols_original * num_rows_original
+
+        # Determine the number of columns and rows based on available albums but within the original size limit
+        num_cols = min(num_cols_original, num_albums)
+        num_rows = -(-max_albums_original // num_cols)  # Ensure proper row count even if not fully filled
+
+        # Adjust the grid size to fit available albums if available albums are fewer than the requested grid size
+        if num_albums < (num_cols_original * num_rows_original):
+            num_cols = min(num_cols_original, num_albums)
+            num_rows = -(-num_albums // num_cols)  # Ensure proper row count even if not fully filled
+
+        # Calculate the actual size needed for the chart based on the adjusted columns and rows
         actual_chart_size = (
             num_cols * ALBUM_COVER_SIZE[0],
             num_rows * ALBUM_COVER_SIZE[1]
@@ -107,7 +119,7 @@ class Chart:
         # Create a new image with the adjusted size
         chart = Image.new("RGB", actual_chart_size)
 
-        for album in albums_with_images:
+        for album_index, album in enumerate(albums_with_images[:num_cols * num_rows]):
             album_cover = self._get_album_cover(album)
             album_cover = self._write_album_info(album, album_cover)
             chart.paste(album_cover, current_position)
@@ -115,7 +127,7 @@ class Chart:
             current_position = list(current_position)
             current_position[0] += ALBUM_COVER_SIZE[0]
 
-            if (albums_with_images.index(album) + 1) % num_cols == 0:
+            if (album_index + 1) % num_cols == 0:
                 current_position[0] = 0
                 current_position[1] += ALBUM_COVER_SIZE[1]
 
