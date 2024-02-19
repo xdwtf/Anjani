@@ -201,7 +201,7 @@ class Misc(plugin.Plugin):
             if odesli_response.ok:
                 odesli_data = odesli_response.json()
                 odesli_page_url = odesli_data.get("pageUrl")
-                entities = data.get("entitiesByUniqueId", {})
+                entities = odesli_data.get("entitiesByUniqueId", {})
                 song_entity = next(iter(entities.values()))
                 artist_name = song_entity.get("artistName")
                 title = song_entity.get("title")
