@@ -183,6 +183,9 @@ class Misc(plugin.Plugin):
         api_url = "https://api.songwhip.com/v3/create"
         odesli_url = f'https://api.song.link/v1-alpha.1/links?url={url}'
         platforms = set()  # Define the platforms set here
+        songwhip_url = None
+        odesli_page_url = None
+    
 
         try:
             headers = {'Content-Type': 'application/json'}
@@ -203,7 +206,7 @@ class Misc(plugin.Plugin):
             odesli_response = requests.get(odesli_url)
             if odesli_response.ok:
                 odesli_data = odesli_response.json()
-                odesli_page_url = odesli_data.get("pageUrl")
+                odesli_page_url = odesli_data.get("pageUrl", None)
                 entities = odesli_data.get("entitiesByUniqueId", {})
                 song_entity = next(iter(entities.values()))
                 artist_name = song_entity.get("artistName")
@@ -218,7 +221,8 @@ class Misc(plugin.Plugin):
                 message = ""
                 message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
                 message += platform_str
-                message += f' | [Odesli]({odesli_page_url})'
+                if odesli_page_url is not None:
+                    message += f' | [Odesli]({odesli_page_url})'
                 if songwhip_url is not None:
                     message += f' | [Songwhip](https://songwhip.com{songwhip_url})'
                 await self.bot.client.send_message(
