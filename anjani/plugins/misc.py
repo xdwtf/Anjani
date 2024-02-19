@@ -27,37 +27,26 @@ from pyrogram.enums.parse_mode import ParseMode
 import re, json, random, requests, os, io, filetype, httpx
 from bs4 import BeautifulSoup
 
-platforms_regex = re.compile(r'('
-    r'https?://open\.spotify\.com/(?:album|track|playlist)/[a-zA-Z0-9]+(?:/.*)?|'
-    r'https?://itunes\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
-    r'https?://music\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)?|'
-    r'https?://music\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
-    r'https?://www\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
-    r'https?://www\.google\.com/search\?.*&(?:source=lnms&tbm=isch&q=)?spotify\+[^&]*(?:&[^&]*)*|'
-    r'https?://play\.google\.com/store/music/album/[^/?#]+/[^/?#]+|'
-    r'https?://www\.pandora\.com/artist/[^/?#]+/[^/?#]+|'
-    r'https?://www\.deezer\.com/(?:album|track|playlist)/[0-9]+|'
-    r'https?://listen\.tidal\.com/(?:album|track|playlist)/[0-9]+|'
-    r'https?://www\.amazon\.(?:com|co\.uk|de|fr|ca)/gp/product/[^/?#]+|'
-    r'https?://music\.amazon\.(?:com|co\.uk|de|fr|ca)/(?:albums|artists|playlists)/[^/?#]+|'
-    r'https?://soundcloud\.com/(?:[^/?#]+/)?[^/?#]+|'
-    r'https?://us\.napster\.com/(?:artist|album|track)/[^/?#]+|'
-    r'https?://music\.yandex\.ru/(?:album|track|playlist)/[0-9]+|'
-    r'https?://spinrilla\.com/songs/[^/?#]+|'
-    r'https?://audius\.co/(?:artist|track|playlist)/[^/?#]+|'
-    r'https?://(?:www\.)?anghami\.com/.*|'
-    r'https?://(?:www\.)?boomplay\.com/songs/[0-9]+|'
-    r'https?://audiomack\.com/[^/?#]+/song/[^/?#]+|'
-    r'(https?://([a-zA-Z\d-]+\.)*deezer\.com(/\w\w)?/(album|track)/[^\s.,]*)|(https?://deezer\.page\.link/[^\s.,]*)|'
-    r'https?://([a-zA-Z\d-]+\.)*soundcloud\.(com|app\.goo\.gl)/[^\s.,]*|'
-    r'https?://([a-zA-Z\d-]+\.)*music\.yandex\.(com|ru|by)/(album|track)/[^\s.,]*|'
-    r'https?://([a-zA-Z\d-]+\.)*((spotify\.com/(album|track)/[^\s.,]*)|(tospotify\.com/[^\s.,]*)|(spotify\.link/[^\s]*))|'
-    r'(https?://([a-zA-Z\d-]+\.)*music\.youtube\.com/(watch|playlist)\?(v|list)=[^\s.,]*)|'
-    r'https?://(((www\.)?youtube\.com/(watch|playlist)\?(v|list)=[^\s,]*)|(youtu\.be/[^\s.,]*))|'
-    r'https?://([a-zA-Z\d-]+\.)*music\.apple\.com/.*?/album/[^\s,.]*|'
-    r'https?://(www\.|listen\.)?tidal\.com(/browse)?/(track|album)/\d+|'
-    r'https?://[^\s.,]*\.bandcamp\.com/(album|track)/[^\s.,]*'
-    r')')
+custom_patterns = {
+    "youtube": r"^(https?:\/\/)?((www\.)?youtube\.com|music\.youtube\.com|youtu\.?be)\/.+",
+    "spotify": r"^(https?:\/\/)?(www\.)?(open\.spotify\.com)\/.+",
+    "soundcloud": r"^(https?:\/\/)?((www\.)?soundcloud\.com)\/.+",
+    "deezer": r"^(https?:\/\/)?((www\.)?deezer\.com)\/.+",
+    "apple": r"^(https?:\/\/)?((www\.)?music\.apple\.com)\/.+",
+    "tidal": r"^(https?:\/\/)?((www\.)?tidal\.com)\/.+",
+    "amazon": r"^(https?:\/\/)?((www\.)?music\.amazon\.com)\/.+",
+    "audioMack": r"^(https?:\/\/)?((www\.)?audiomack\.com)\/.+",
+    "qobuz": r"^(https?:\/\/)?((www\.)?qobuz\.com)\/.+",
+    "napster": r"^(https?:\/\/)?((www\.)?us\.napster\.com)\/.+",
+    "pandora": r"^(https?:\/\/)?((www\.)?pandora\.com)\/.+",
+    "itunes": r"^(https?:\/\/)?((www\.)?itunes\.apple\.com)\/.+",
+    "lineMusic": r"^(https?:\/\/)?((www\.)?music\.line\.me)\/.+",
+    "amazonMusic": r"^(https?:\/\/)?((www\.)?music\.amazon\.co\.jp)\/.+",
+    "itunesStore": r"^(https?:\/\/)?((www\.)?itunes\.apple\.com)\/.+",
+    "youtubeMusic": r"^(https?:\/\/)?((www\.)?music\.youtube\.com)\/.+",
+    "googlePlayMusic": r"^(https?:\/\/)?((www\.)?play\.google\.com)\/.+",
+    "bandcamp": r"^(https?:\/\/)?((www\.)?bandcamp\.com)\/.+",
+}
 
 class Paste:
     def __init__(self, session: ClientSession, name: str, url: str):
@@ -134,12 +123,29 @@ class Misc(plugin.Plugin):
         if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
             # Instagram Reel
             await self.handle_instagram_reel(message)
-        elif re.match(platforms_regex, text):
-            # Music Links
-            await self.handle_music_links(message)
-        elif re.match(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)", text):
-            # Threads Handler
-            await self.handle_threads(message)
+        else:
+            url = self.extract_custom_url(text)
+            if url:
+                await self.handle_music_links(message, url)
+
+    async def extract_custom_url(self, text: str) -> Optional[str]:
+        """Extract the first URL that matches custom patterns."""
+        # Check if text contains multiple lines
+        if '\n' in text:
+            # Split text into lines
+            lines = text.split('\n')
+        else:
+            # Put single-line text into a list
+            lines = [text]
+
+        # Iterate over each line
+        for line in lines:
+            # Iterate over each pattern
+            for pattern in custom_patterns.values():
+                match = re.search(pattern, line)
+                if match:
+                    return match.group(0)  
+        return None
 
     async def handle_instagram_reel(self, message: Message) -> None:
         """Handle Instagram Reel"""
@@ -165,58 +171,28 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-    async def handle_music_links(self, message: Message) -> None:
+    async def handle_music_links(self, message: Message, url: str) -> None:
         """Listen Music Links"""
         chat = message.chat
         userx = message.from_user
         ie = message.reply_to_message or message
-        xd = platforms_regex.search(message.text)
+        api_url = "https://api.songwhip.com/v3/create"
+        odesli_url = f'https://api.song.link/v1-alpha.1/links?url={url}'
+        platforms = set()  # Define the platforms set here
 
         try:
-            if xd:
-                url1 = "https://songwhip.com/"
-                data1 = {"url": xd[0]}
-                response1 = requests.post(url1, json=data1)
-
-                url2 = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
-                response2 = requests.get(url2)
-
-                platforms = set()
-                links_by_platform2 = {}
-                if response1.ok:
-                    data1 = response1.json()
-                    data1url = data1["url"]
-                    artists = data1.get("artists", [])
-                    for artist in artists:
-                        links = artist.get("links", {})
-                        platforms.update(links.keys())
-
-                if response2.ok:
-                    data2 = response2.json()
-                    data2url = data2.get("pageUrl")
-                    entities = data2.get("entitiesByUniqueId", {})
-                    song_entity = next(iter(entities.values()))
-                    title = song_entity.get("title")
-                    artist_name = song_entity.get("artistName")
-                    links_by_platform2 = data2.get("linksByPlatform", {})
-                    platforms.update(links_by_platform2.keys())
-
-                message = ""
-                message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
-                for platform in platforms:
-                    urls = []
-                    if platform in links_by_platform2:
-                        urls.append(links_by_platform2[platform]["url"])
-                    for artist in artists:
-                        links = artist.get("links", {})
-                        if platform in links:
-                            first_url = links[platform][0]["link"].split(" | ")[0]
-                            urls.append(first_url)
-                            break
-                    platform_name = platform.title()
-                    urls_str = urls[0] if urls else ""
-                    message += f"[{platform_name}]({urls_str}) | "
-
+            headers = {'Content-Type': 'application/json'}
+            payload = {'url': url, 'country': 'US'}
+            response = requests.post(api_url, json=payload, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                links_data = data.get("data", {}).get("item", {}).get("links", {})
+                for platform, platform_data in links_data.items():
+                    for link_info in platform_data:
+                        platform_url = link_info['link']
+                        platforms.add(platform_url)  # Add the platform URL to the set
+                
+                odesli_page_url = fetch_odesli_data(odesli_url)
                 message += f'[Odesli]({data2url}) | [Songwhip]({data1url})'
                 await self.bot.client.send_message(
                     chat.id,
@@ -228,69 +204,6 @@ class Misc(plugin.Plugin):
             else:
                 self.log.info(f"music else part")
                 return None
-        except Exception as e:
-            self.log.error(e, exc_info=e)
-            return None
-
-    async def handle_threads(self, message: Message) -> None:
-        """Threads Handler"""
-        chat = message.chat
-        ie = message.reply_to_message or message
-        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
-        xd = re.findall(Pattern, message.text)
-        self.log.info(f"Received message: {xd[0]}")
-        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
-        
-        try:
-            async with httpx.AsyncClient() as http_client:
-                response_homepage = await http_client.get("https://www.threads.net/")
-                if response_homepage.status_code != 200:
-                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
-                    return None
-                
-                self.log.info(f"Received message: {xd[0]}")
-            
-                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
-                soup = BeautifulSoup(response_embed.text, "html.parser")
-                medias = []
-
-                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
-                    if video := div.find("video"):
-                        url = video.find("source").get("src")
-                        medias.append({"p": url, "type": "video"})
-                    elif image := div.find("img", {"class": "img"}):
-                        url = image.get("src")
-                        medias.append({"p": url, "type": "image"})
-
-                if not medias:
-                    self.log.info(f"no media found for {xd[0]}")
-                    return None
-
-                files = []
-                for media in medias:
-                    response_media = await http_client.get(media["p"])
-                    file = io.BytesIO(response_media.content)
-                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                    files.append({"p": file, "type": media["type"]})
-
-                if not files:
-                    self.log.info(f"no FILES found for {xd[0]}")
-                    return None
-
-                for file in files:
-                    filepath = f"{file['p'].name}"
-                    with open(filepath, 'wb') as f:
-                        f.write(file['p'].getbuffer())
-
-                if file["type"] == "video":
-                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                elif file["type"] == "image":
-                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                else:
-                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                    # Remove the downloaded file
-                    os.remove(filepath)
-
         except Exception as e:
             self.log.error(e, exc_info=e)
             return None
