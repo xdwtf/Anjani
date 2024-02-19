@@ -1,5 +1,5 @@
 """miscellaneous bot commands"""
-# Copyright (C) 2020 - 2023  UserbotIndo Team, <https://github.com/userbotindo.git>
+# Copyright (C) 2020 - 2024  UserbotIndo Team, <https://github.com/userbotindo.git>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,37 +27,26 @@ from pyrogram.enums.parse_mode import ParseMode
 import re, json, random, requests, os, io, filetype, httpx
 from bs4 import BeautifulSoup
 
-platforms_regex = re.compile(r'('
-    r'https?://open\.spotify\.com/(?:album|track|playlist)/[a-zA-Z0-9]+(?:/.*)?|'
-    r'https?://itunes\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)|'
-    r'https?://music\.apple\.com/(?:[a-z]{2}/)?(?:album/[^/?#]+|artist/[^/?#]+/[^/?#]+|playlist/[^/?#]+)?|'
-    r'https?://music\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
-    r'https?://www\.youtube\.com/(?:(?:watch\?v=[a-zA-Z0-9_-]+&list=[a-zA-Z0-9_-]+)|(?:watch\?v=[a-zA-Z0-9_-]+))|'
-    r'https?://www\.google\.com/search\?.*&(?:source=lnms&tbm=isch&q=)?spotify\+[^&]*(?:&[^&]*)*|'
-    r'https?://play\.google\.com/store/music/album/[^/?#]+/[^/?#]+|'
-    r'https?://www\.pandora\.com/artist/[^/?#]+/[^/?#]+|'
-    r'https?://www\.deezer\.com/(?:album|track|playlist)/[0-9]+|'
-    r'https?://listen\.tidal\.com/(?:album|track|playlist)/[0-9]+|'
-    r'https?://www\.amazon\.(?:com|co\.uk|de|fr|ca)/gp/product/[^/?#]+|'
-    r'https?://music\.amazon\.(?:com|co\.uk|de|fr|ca)/(?:albums|artists|playlists)/[^/?#]+|'
-    r'https?://soundcloud\.com/(?:[^/?#]+/)?[^/?#]+|'
-    r'https?://us\.napster\.com/(?:artist|album|track)/[^/?#]+|'
-    r'https?://music\.yandex\.ru/(?:album|track|playlist)/[0-9]+|'
-    r'https?://spinrilla\.com/songs/[^/?#]+|'
-    r'https?://audius\.co/(?:artist|track|playlist)/[^/?#]+|'
-    r'https?://(?:www\.)?anghami\.com/.*|'
-    r'https?://(?:www\.)?boomplay\.com/songs/[0-9]+|'
-    r'https?://audiomack\.com/[^/?#]+/song/[^/?#]+|'
-    r'(https?://([a-zA-Z\d-]+\.)*deezer\.com(/\w\w)?/(album|track)/[^\s.,]*)|(https?://deezer\.page\.link/[^\s.,]*)|'
-    r'https?://([a-zA-Z\d-]+\.)*soundcloud\.(com|app\.goo\.gl)/[^\s.,]*|'
-    r'https?://([a-zA-Z\d-]+\.)*music\.yandex\.(com|ru|by)/(album|track)/[^\s.,]*|'
-    r'https?://([a-zA-Z\d-]+\.)*((spotify\.com/(album|track)/[^\s.,]*)|(tospotify\.com/[^\s.,]*)|(spotify\.link/[^\s]*))|'
-    r'(https?://([a-zA-Z\d-]+\.)*music\.youtube\.com/(watch|playlist)\?(v|list)=[^\s.,]*)|'
-    r'https?://(((www\.)?youtube\.com/(watch|playlist)\?(v|list)=[^\s,]*)|(youtu\.be/[^\s.,]*))|'
-    r'https?://([a-zA-Z\d-]+\.)*music\.apple\.com/.*?/album/[^\s,.]*|'
-    r'https?://(www\.|listen\.)?tidal\.com(/browse)?/(track|album)/\d+|'
-    r'https?://[^\s.,]*\.bandcamp\.com/(album|track)/[^\s.,]*'
-    r')')
+custom_patterns = {
+    "youtube": r"^(https?:\/\/)?((www\.)?youtube\.com|music\.youtube\.com|youtu\.?be)\/.+",
+    "spotify": r"^(https?:\/\/)?(www\.)?(open\.spotify\.com)\/.+",
+    "soundcloud": r"^(https?:\/\/)?((www\.)?soundcloud\.com)\/.+",
+    "deezer": r"^(https?:\/\/)?((www\.)?deezer\.com)\/.+",
+    "apple": r"^(https?:\/\/)?((www\.)?music\.apple\.com)\/.+",
+    "tidal": r"^(https?:\/\/)?((www\.)?tidal\.com)\/.+",
+    "amazon": r"^(https?:\/\/)?((www\.)?music\.amazon\.com)\/.+",
+    "audioMack": r"^(https?:\/\/)?((www\.)?audiomack\.com)\/.+",
+    "qobuz": r"^(https?:\/\/)?((www\.)?qobuz\.com)\/.+",
+    "napster": r"^(https?:\/\/)?((www\.)?us\.napster\.com)\/.+",
+    "pandora": r"^(https?:\/\/)?((www\.)?pandora\.com)\/.+",
+    "itunes": r"^(https?:\/\/)?((www\.)?itunes\.apple\.com)\/.+",
+    "lineMusic": r"^(https?:\/\/)?((www\.)?music\.line\.me)\/.+",
+    "amazonMusic": r"^(https?:\/\/)?((www\.)?music\.amazon\.co\.jp)\/.+",
+    "itunesStore": r"^(https?:\/\/)?((www\.)?itunes\.apple\.com)\/.+",
+    "youtubeMusic": r"^(https?:\/\/)?((www\.)?music\.youtube\.com)\/.+",
+    "googlePlayMusic": r"^(https?:\/\/)?((www\.)?play\.google\.com)\/.+",
+    "bandcamp": r"^(https?:\/\/)?((www\.)?bandcamp\.com)\/.+",
+}
 
 class Paste:
     def __init__(self, session: ClientSession, name: str, url: str):
@@ -134,12 +123,29 @@ class Misc(plugin.Plugin):
         if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
             # Instagram Reel
             await self.handle_instagram_reel(message)
-        elif re.match(platforms_regex, text):
-            # Music Links
-            await self.handle_music_links(message)
-        elif re.match(r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)", text):
-            # Threads Handler
-            await self.handle_threads(message)
+        else:
+            url = self.extract_custom_url(text)
+            if url:
+                await self.handle_music_links(message, url)
+
+    async def extract_custom_url(self, text: str) -> Optional[str]:
+        """Extract the first URL that matches custom patterns."""
+        # Check if text contains multiple lines
+        if '\n' in text:
+            # Split text into lines
+            lines = text.split('\n')
+        else:
+            # Put single-line text into a list
+            lines = [text]
+
+        # Iterate over each line
+        for line in lines:
+            # Iterate over each pattern
+            for pattern in custom_patterns.values():
+                match = re.search(pattern, line)
+                if match:
+                    return match.group(0)  
+        return None
 
     async def handle_instagram_reel(self, message: Message) -> None:
         """Handle Instagram Reel"""
@@ -165,38 +171,53 @@ class Misc(plugin.Plugin):
         except Exception as e:
             return None
 
-    async def handle_music_links(self, message: Message) -> None:
+    async def handle_music_links(self, message: Message, url: str) -> None:
         """Listen Music Links"""
         chat = message.chat
         userx = message.from_user
         ie = message.reply_to_message or message
-        xd = platforms_regex.search(message.text)
+        api_url = "https://api.songwhip.com/v3/create"
+        odesli_url = f'https://api.song.link/v1-alpha.1/links?url={url}'
+        platforms = set()  # Define the platforms set here
 
         try:
-            if xd:
-                urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
-                response = requests.request("GET", urlx)
-                data = response.json()
+            headers = {'Content-Type': 'application/json'}
+            payload = {'url': url, 'country': 'US'}
+            data = None
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(api_url, json=payload, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        songwhip_url = data.get("data", {}).get("item", {}).get("url")
+                        links_data = data.get("data", {}).get("item", {}).get("links", {})
+                        for platform, platform_data in links_data.items():
+                            for link_info in platform_data:
+                                platform_url = link_info['link']
+                                platforms.add(platform_url)  # Add the platform URL to the set
+                
+            odesli_response = requests.get(odesli_url)
+            if odesli_response.ok:
+                odesli_data = odesli_response.json()
+                odesli_page_url = odesli_data.get("pageUrl")
                 entities = data.get("entitiesByUniqueId", {})
                 song_entity = next(iter(entities.values()))
                 artist_name = song_entity.get("artistName")
                 title = song_entity.get("title")
-                links_by_platform = data.get("linksByPlatform", {})
-                pu = data.get("pageUrl")
-                platforms = []
-                urls = []
+                links_by_platform = odesli_data.get("linksByPlatform", {})
                 for platform, platform_data in links_by_platform.items():
-                    url = platform_data.get("url")
-                    cw = platform.title()
-                    platforms.append(f"[{cw}]({url})")
-
-                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
-                link_text = " | ".join(platforms)
-                li = f'\n\n[View on Odesli]({pu})'
-                nt = um + link_text + li
+                    platform_url = platform_data.get("url")
+                    platforms.add((platform, platform_url))  # Add the platform and its URL to the set
+                    
+                sorted_platforms = sorted(platforms, key=lambda x: x[0])
+                platform_str = " | ".join(f"[{platform.title()}]({platform_url})" for platform, platform_url in sorted_platforms)
+                message = ""
+                message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
+                message += platform_str
+                message += f' | [Odesli]({odesli_page_url}) | [Songwhip](https://songwhip.com{songwhip_url})'
                 await self.bot.client.send_message(
                     chat.id,
-                    text=nt,
+                    text=message,
                     reply_to_message_id=ie.id,
                     parse_mode=ParseMode.MARKDOWN,
                     disable_web_page_preview=True,
@@ -204,69 +225,6 @@ class Misc(plugin.Plugin):
             else:
                 self.log.info(f"music else part")
                 return None
-        except Exception as e:
-            self.log.error(e, exc_info=e)
-            return None
-
-    async def handle_threads(self, message: Message) -> None:
-        """Threads Handler"""
-        chat = message.chat
-        ie = message.reply_to_message or message
-        Pattern = r"https://www\.threads\.net/t/([a-zA-Z0-9_-]+)"
-        xd = re.findall(Pattern, message.text)
-        self.log.info(f"Received message: {xd[0]}")
-        cap = f"Shared by : {message.from_user.mention}\n\n[open in threads](https://www.threads.net/t/{xd[0]})"
-        
-        try:
-            async with httpx.AsyncClient() as http_client:
-                response_homepage = await http_client.get("https://www.threads.net/")
-                if response_homepage.status_code != 200:
-                    self.log.info(f"Failed to fetch homepage: {response_homepage.status_code}")
-                    return None
-                
-                self.log.info(f"Received message: {xd[0]}")
-            
-                response_embed = await http_client.get(f"https://www.threads.net/t/{xd[0]}/embed/")
-                soup = BeautifulSoup(response_embed.text, "html.parser")
-                medias = []
-
-                if div := soup.find("div", {"class": "SingleInnerMediaContainer"}):
-                    if video := div.find("video"):
-                        url = video.find("source").get("src")
-                        medias.append({"p": url, "type": "video"})
-                    elif image := div.find("img", {"class": "img"}):
-                        url = image.get("src")
-                        medias.append({"p": url, "type": "image"})
-
-                if not medias:
-                    self.log.info(f"no media found for {xd[0]}")
-                    return None
-
-                files = []
-                for media in medias:
-                    response_media = await http_client.get(media["p"])
-                    file = io.BytesIO(response_media.content)
-                    file.name = f"{media['p'][60:80]}.{filetype.guess_extension(file)}"
-                    files.append({"p": file, "type": media["type"]})
-
-                if not files:
-                    self.log.info(f"no FILES found for {xd[0]}")
-                    return None
-
-                for file in files:
-                    filepath = f"{file['p'].name}"
-                    with open(filepath, 'wb') as f:
-                        f.write(file['p'].getbuffer())
-
-                if file["type"] == "video":
-                    await self.bot.client.send_video(chat.id, video=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                elif file["type"] == "image":
-                    await self.bot.client.send_photo(chat.id, photo=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                else:
-                    await self.bot.client.send_document(chat.id, document=filepath, caption=cap, reply_to_message_id=ie.id, parse_mode=ParseMode.MARKDOWN)
-                    # Remove the downloaded file
-                    os.remove(filepath)
-
         except Exception as e:
             self.log.error(e, exc_info=e)
             return None
