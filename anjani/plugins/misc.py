@@ -193,7 +193,7 @@ class Misc(plugin.Plugin):
                 async with session.post(api_url, json=payload, headers=headers) as response:
                     if response.status == 200:
                         data = await response.json()
-                        songwhip_url = data.get("data", {}).get("item", {}).get("url")
+                        songwhip_url = data.get("data", {}).get("item", {}).get("url", None)
                         links_data = data.get("data", {}).get("item", {}).get("links", {})
                         for platform, platform_data in links_data.items():
                             for link_info in platform_data:
@@ -218,7 +218,9 @@ class Misc(plugin.Plugin):
                 message = ""
                 message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
                 message += platform_str
-                message += f' | [Odesli]({odesli_page_url}) | [Songwhip](https://songwhip.com{songwhip_url})'
+                message += f' | [Odesli]({odesli_page_url})'
+                if songwhip_url is not None:
+                    message += f' | [Songwhip](https://songwhip.com{songwhip_url})'
                 await self.bot.client.send_message(
                     chat.id,
                     text=message,
