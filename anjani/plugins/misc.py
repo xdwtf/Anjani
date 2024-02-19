@@ -19,6 +19,7 @@ from typing import Any, ClassVar, Optional
 
 from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
+import aiohttp
 
 from anjani import command, filters, listener, plugin
 from pyrogram.types import Message
@@ -124,7 +125,7 @@ class Misc(plugin.Plugin):
             # Instagram Reel
             await self.handle_instagram_reel(message)
         else:
-            url = self.extract_custom_url(text)
+            url = await self.extract_custom_url(text)
             if url:
                 await self.handle_music_links(message, url)
 
