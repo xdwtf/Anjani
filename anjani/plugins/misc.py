@@ -174,29 +174,53 @@ class Misc(plugin.Plugin):
 
         try:
             if xd:
-                urlx = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
-                response = requests.request("GET", urlx)
-                data = response.json()
-                entities = data.get("entitiesByUniqueId", {})
-                song_entity = next(iter(entities.values()))
-                artist_name = song_entity.get("artistName")
-                title = song_entity.get("title")
-                links_by_platform = data.get("linksByPlatform", {})
-                pu = data.get("pageUrl")
-                platforms = []
-                urls = []
-                for platform, platform_data in links_by_platform.items():
-                    url = platform_data.get("url")
-                    cw = platform.title()
-                    platforms.append(f"[{cw}]({url})")
+                url1 = "https://songwhip.com/"
+                data1 = {"url": xd[0]}
+                response1 = requests.post(url1, json=data1)
 
-                um = f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
-                link_text = " | ".join(platforms)
-                li = f'\n\n[View on Odesli]({pu})'
-                nt = um + link_text + li
+                url2 = f'https://api.song.link/v1-alpha.1/links?url={xd[0]}'
+                response2 = requests.get(url2)
+
+                platforms = set()
+                links_by_platform2 = {}
+                if response1.ok:
+                    data1 = response1.json()
+                    data1url = data1["url"]
+                    artists = data1.get("artists", [])
+                    for artist in artists:
+                        links = artist.get("links", {})
+                        platforms.update(links.keys())
+
+                if response2.ok:
+                    data2 = response2.json()
+                    data2url = data2.get("pageUrl")
+                    entities = data2.get("entitiesByUniqueId", {})
+                    song_entity = next(iter(entities.values()))
+                    title = song_entity.get("title")
+                    artist_name = song_entity.get("artistName")
+                    links_by_platform2 = data2.get("linksByPlatform", {})
+                    platforms.update(links_by_platform2.keys())
+
+                message = ""
+                message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
+                for platform in platforms:
+                    urls = []
+                    if platform in links_by_platform2:
+                        urls.append(links_by_platform2[platform]["url"])
+                    for artist in artists:
+                        links = artist.get("links", {})
+                        if platform in links:
+                            first_url = links[platform][0]["link"].split(" | ")[0]
+                            urls.append(first_url)
+                            break
+                    platform_name = platform.title()
+                    urls_str = urls[0] if urls else ""
+                    message += f"[{platform_name}]({urls_str}) | "
+
+                message += f'[Odesli]({data2url}) | [Songwhip]({data1url})'
                 await self.bot.client.send_message(
                     chat.id,
-                    text=nt,
+                    text=message,
                     reply_to_message_id=ie.id,
                     parse_mode=ParseMode.MARKDOWN,
                     disable_web_page_preview=True,
