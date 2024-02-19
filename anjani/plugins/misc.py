@@ -47,6 +47,9 @@ custom_patterns = {
     "youtubeMusic": r"^(https?:\/\/)?((www\.)?music\.youtube\.com)\/.+",
     "googlePlayMusic": r"^(https?:\/\/)?((www\.)?play\.google\.com)\/.+",
     "bandcamp": r"^(https?:\/\/)?((www\.)?bandcamp\.com)\/.+",
+    "discogs": r"^(https?:\/\/)?((www\.)?discogs\.com)\/.+",
+    "ticketmaster": r"^(https?:\/\/)?((www\.)?ticketmaster\.com)\/.+",
+    "musicbrainz": r"^(https?:\/\/)?((www\.)?musicbrainz\.org)\/.+",
 }
 
 class Paste:
