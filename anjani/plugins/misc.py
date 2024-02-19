@@ -185,7 +185,7 @@ class Misc(plugin.Plugin):
             headers = {'Content-Type': 'application/json'}
             payload = {'url': url, 'country': 'US'}
             data = None
-            
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(api_url, json=payload, headers=headers) as response:
                     if response.status == 200:
@@ -195,8 +195,8 @@ class Misc(plugin.Plugin):
                         for platform, platform_data in links_data.items():
                             for link_info in platform_data:
                                 platform_url = link_info['link']
-                                platforms.add(platform_url)  # Add the platform URL to the set
-                
+                                platforms.add((platform, platform_url))  # Add the platform and its URL to the set
+
             odesli_response = requests.get(odesli_url)
             if odesli_response.ok:
                 odesli_data = odesli_response.json()
@@ -209,9 +209,9 @@ class Misc(plugin.Plugin):
                 for platform, platform_data in links_by_platform.items():
                     platform_url = platform_data.get("url")
                     platforms.add((platform, platform_url))  # Add the platform and its URL to the set
-                    
-                sorted_platforms = sorted(platforms, key=lambda x: x[0])
-                platform_str = " | ".join(f"[{platform.title()}]({platform_url})" for platform_url in sorted_platforms)
+
+                sorted_platforms = sorted(platforms)
+                platform_str = " | ".join(f"[{platform.title()}]({platform_url})" for platform, platform_url in sorted_platforms)
                 message = ""
                 message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
                 message += platform_str
