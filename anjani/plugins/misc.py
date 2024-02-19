@@ -211,7 +211,7 @@ class Misc(plugin.Plugin):
                     platforms.add((platform, platform_url))  # Add the platform and its URL to the set
                     
                 sorted_platforms = sorted(platforms, key=lambda x: x[0])
-                platform_str = " | ".join(f"[{platform.title()}]({platform_url})" for platform, platform_url in sorted_platforms)
+                platform_str = " | ".join(f"[{platform.title()}]({platform_url})" for platform_url in sorted_platforms)
                 message = ""
                 message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
                 message += platform_str
