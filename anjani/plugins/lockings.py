@@ -1,4 +1,5 @@
 """Lock/Unlock group Plugin"""
+
 # Copyright (C) 2020 - 2023  UserbotIndo Team, <https://github.com/userbotindo.git>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -37,6 +38,7 @@ from pyrogram.enums.message_entity_type import MessageEntityType
 from pyrogram.errors import (
     ChannelPrivate,
     ChatAdminRequired,
+    ChatNotModified,
     MessageDeleteForbidden,
     MessageIdInvalid,
     PeerIdInvalid,
@@ -44,7 +46,7 @@ from pyrogram.errors import (
 )
 from pyrogram.types import Chat, ChatPermissions, Message
 
-from anjani import command, filters, plugin, util
+from anjani import command, filters, listener, plugin, util
 
 
 async def anon(_: Client, message: Message) -> bool:
@@ -131,6 +133,7 @@ class Lockings(plugin.Plugin):
     async def on_plugin_restore(self, chat_id: int, data: MutableMapping[str, Any]) -> None:
         await self.db.update_one({"chat_id": chat_id}, {"$set": data[self.name]}, upsert=True)
 
+    @listener.priority(95)
     async def on_message(self, message: Message) -> None:
         if message.outgoing:
             return
@@ -342,10 +345,14 @@ class Lockings(plugin.Plugin):
             except ChatAdminRequired as e:
                 return await ctx.get_text(
                     "lockings-admin-required",
-                    message=e.MESSAGE.split()[-1].strip(")").split(".")[-1].strip('"')
-                    if e.MESSAGE
-                    else "",
+                    message=(
+                        e.MESSAGE.split()[-1].strip(")").split(".")[-1].strip('"')
+                        if e.MESSAGE
+                        else ""
+                    ),
                 )
+            except ChatNotModified:
+                return await ctx.get_text("lockings-not-modified")
         elif lock_type in LOCK_TYPES:
             locked = await self.get_chat_restrictions(chat.id)
             if lock_type in locked:
@@ -380,10 +387,14 @@ class Lockings(plugin.Plugin):
             ):
                 return await ctx.get_text("unlockings-type-unlocked", unlock_type=unlock_type)
 
-            await self.bot.client.set_chat_permissions(
-                chat_id=chat.id,
-                permissions=self.unpack_permissions(permissions, "unlock", unlock_type),
-            )
+            try:
+                await self.bot.client.set_chat_permissions(
+                    chat_id=chat.id,
+                    permissions=self.unpack_permissions(permissions, "unlock", unlock_type),
+                )
+            except ChatNotModified:
+                return await ctx.get_text("lockings-not-modified")
+
         elif unlock_type in LOCK_TYPES:
             locked = await self.get_chat_restrictions(chat.id)
             if not locked or unlock_type not in locked:
