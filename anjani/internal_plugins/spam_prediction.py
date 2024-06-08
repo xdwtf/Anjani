@@ -1,4 +1,5 @@
 """Spam Prediction plugin"""
+
 # Copyright (C) 2020 - 2023  UserbotIndo Team, <https://github.com/userbotindo.git>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -48,6 +49,7 @@ except ImportError:
     _run_predict = False
 
 from anjani import command, filters, listener, plugin, util
+from anjani.core.metrics import SpamPredictionStat
 from anjani.util.misc import StopPropagation
 
 
@@ -318,6 +320,7 @@ class SpamPrediction(plugin.Plugin):
 
         response = await self.model.predict(text_norm)
         await self.bot.log_stat("predicted")
+        SpamPredictionStat.labels("predicted").inc()
         if response.size == 0:
             return
 
@@ -391,7 +394,7 @@ class SpamPrediction(plugin.Plugin):
             if user:
                 try:
                     target = await message.chat.get_member(user)
-                except UserNotParticipant:
+                except (UserNotParticipant, ChatAdminRequired):
                     pass
                 else:
                     if util.tg.is_staff_or_admin(target):
@@ -405,19 +408,20 @@ class SpamPrediction(plugin.Plugin):
             )
 
             await self.bot.log_stat("spam_detected")
+            SpamPredictionStat.labels("detected").inc()
             try:
                 await message.delete()
             except (MessageDeleteForbidden, ChatAdminRequired, UserAdminInvalid):
-                alert += "\n\nNot enough permission to delete message."
+                alert += "\n\n⚠️Not enough permission to delete message."
                 reply_id = message.id
             else:
                 await self.bot.log_stat("spam_deleted")
+                SpamPredictionStat.labels("deleted").inc()
                 alert += "\n\nThe message has been deleted."
                 reply_id = 0
 
             chat = message.chat
             button = []
-            me = await chat.get_member(self.bot.uid)
             if util.tg.get_username(message.chat) and msg_id:
                 button.append(
                     [
@@ -427,14 +431,16 @@ class SpamPrediction(plugin.Plugin):
                     ]
                 )
 
-            if me.privileges and me.privileges.can_restrict_members and target is not None:
-                button.append(
-                    [
-                        InlineKeyboardButton(
-                            "Ban User (*admin only)", callback_data=f"spam_ban_{user}"
-                        )
-                    ]
-                )
+            if target is not None:
+                me = await chat.get_member(self.bot.uid)
+                if me.privileges and me.privileges.can_restrict_members:
+                    button.append(
+                        [
+                            InlineKeyboardButton(
+                                "Ban User (*admin only)", callback_data=f"spam_ban_{user}"
+                            )
+                        ]
+                    )
 
             await self.bot.client.send_message(
                 chat.id,
