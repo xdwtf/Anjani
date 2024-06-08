@@ -1,4 +1,5 @@
 """Anjani event dispatcher"""
+
 # Copyright (C) 2020 - 2023  UserbotIndo Team, <https://github.com/userbotindo.git>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -31,6 +32,7 @@ from anjani.listener import Listener, ListenerFunc
 from anjani.util.misc import StopPropagation
 
 from .anjani_mixin_base import MixinBase
+from .metrics import EventCount, EventLatencySecond, UnhandledError
 
 if TYPE_CHECKING:
     from .anjani_bot import Anjani
@@ -161,78 +163,86 @@ class EventDispatcher(MixinBase):
             return None
 
         self.log.debug("Dispatching event '%s' with data %s", event, args)
+        EventCount.labels(event).inc()
+        with EventLatencySecond.labels(event).time():
+            match = None
+            index = None
+            is_tg_event = False
+            for lst in listeners:
+                if lst.filters:
+                    for idx, arg in enumerate(args):
+                        is_tg_event = isinstance(arg, EventType)
+                        if is_tg_event:
+                            if not await lst.filters(self.client, arg):
+                                continue
 
-        match = None
-        index = None
-        is_tg_event = False
-        for lst in listeners:
-            if lst.filters:
-                for idx, arg in enumerate(args):
-                    is_tg_event = isinstance(arg, EventType)
-                    if is_tg_event:
-                        if not await lst.filters(self.client, arg):
-                            continue
+                            match = arg.matches
+                            index = idx
+                            break
 
-                        match = arg.matches
-                        index = idx
-                        break
+                        self.log.error(f"'{type(arg)}' can't be used with filters.")
+                    else:
+                        continue
 
-                    self.log.error(f"'{type(arg)}' can't be used with filters.")
-                else:
-                    continue
+                if match and index is not None:
+                    args[index].matches = match
 
-            if match and index is not None:
-                args[index].matches = match
-
-            result = None
-            try:
-                result = await lst.func(*args, **kwargs)
-            except KeyError:
-                continue
-            except StopPropagation:
-                break
-            except Exception as err:  # skipcq: PYL-W0703
-                dispatcher_error = EventDispatchError(
-                    f"raised from {type(err).__name__}: {str(err)}"
-                ).with_traceback(err.__traceback__)
-                await self.dispatch_alert(
-                    f"Event __{event}__ on `{lst.func.__qualname__}`", dispatcher_error
-                )
-                if is_tg_event and args[0] is not None:
-                    data = _get_event_data(args[0])
-                    self.log.error(
-                        "Error dispatching event '%s' on %s\n"
-                        "  Data:\n"
-                        "    • Chat    -> %s (%d)\n"
-                        "    • Invoker -> %s (%d)\n"
-                        "    • Input   -> %s",
-                        event,
-                        lst.func.__qualname__,
-                        data.get("chat_title", "Unknown"),
-                        data.get("chat_id", -1),
-                        data.get("user_name", "Unknown"),
-                        data.get("user_id", -1),
-                        data.get("input"),
-                        exc_info=dispatcher_error,
-                    )
-                else:
-                    self.log.error(
-                        "Error dispatching event '%s' on %s with data\n%s",
-                        event,
-                        lst.func.__qualname__,
-                        _unpack_args(args),
-                        exc_info=dispatcher_error,
-                    )
-                continue
-            finally:
-                if result:
-                    results.append(result)
-
-                match = None
-                index = None
                 result = None
+                try:
+                    result = await lst.func(*args, **kwargs)
+                except KeyError:
+                    continue
+                except StopPropagation:
+                    break
+                except Exception as err:  # skipcq: PYL-W0703
+                    UnhandledError.labels("command").inc()
+                    dispatcher_error = EventDispatchError(
+                        f"raised from {type(err).__name__}: {str(err)}"
+                    ).with_traceback(err.__traceback__)
+                    if is_tg_event and args[0] is not None:
+                        data = _get_event_data(args[0])
+                        self.log.error(
+                            "Error dispatching event '%s' on %s\n"
+                            "  Data:\n"
+                            "    • Chat    -> %s (%d)\n"
+                            "    • Invoker -> %s (%d)\n"
+                            "    • Input   -> %s",
+                            event,
+                            lst.func.__qualname__,
+                            data.get("chat_title", "Unknown"),
+                            data.get("chat_id", -1),
+                            data.get("user_name", "Unknown"),
+                            data.get("user_id", -1),
+                            data.get("input"),
+                            exc_info=dispatcher_error,
+                        )
+                        await self.dispatch_alert(
+                            f"Event __{event}__ on `{lst.func.__qualname__}`",
+                            dispatcher_error,
+                            data.get("chat_id"),
+                        )
+                    else:
+                        self.log.error(
+                            "Error dispatching event '%s' on %s with data\n%s",
+                            event,
+                            lst.func.__qualname__,
+                            _unpack_args(args),
+                            exc_info=dispatcher_error,
+                        )
+                        await self.dispatch_alert(
+                            f"Event __{event}__ on `{lst.func.__qualname__}`",
+                            dispatcher_error,
+                        )
+                    continue
+                finally:
+                    if result:
+                        results.append(result)
 
-        return tuple(results)
+                    match = None
+                    index = None
+                    result = None
+
+            return tuple(results)
 
     async def dispatch_missed_events(self: "Anjani") -> None:
         if not self.loaded or self._TelegramBot__running:
@@ -329,20 +339,26 @@ class EventDispatcher(MixinBase):
                 {"$unset": {"pts": "", "date": "", "qts": "", "seq": ""}},
             )
 
-    async def dispatch_alert(self: "Anjani", invoker: str, exc: BaseException) -> None:
+    async def dispatch_alert(
+        self: "Anjani",
+        invoker: str,
+        exc: BaseException,
+        chat_id: Optional[int] = None,
+    ) -> None:
         """Dispatches an alert to the configured alert log."""
         if not self.config.ALERT_LOG:
             return
 
         log_chat = self.config.ALERT_LOG.split("#")
-        thread_id = None
-        chat_id = int(log_chat[0])
+        log_thread_id = None
+        log_chat_id = int(log_chat[0])
         if len(log_chat) == 2:
-            thread_id = int(log_chat[1])
+            log_thread_id = int(log_chat[1])
 
         alert = f"""🔴 **Anjani ERROR ALERT**
 
   - **Alert by:** {invoker}
+  - **Chat ID:** {chat_id}
   - **Time (UTC):** {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")}
 
 **ERROR**
@@ -351,9 +367,9 @@ class EventDispatcher(MixinBase):
 ```
         """
         await self.client.send_message(
-            chat_id,
+            log_chat_id,
             alert,
-            message_thread_id=thread_id,  # type: ignore
+            message_thread_id=log_thread_id,  # type: ignore
         )
 
     async def log_stat(self: "Anjani", stat: str, *, value: int = 1) -> None:
