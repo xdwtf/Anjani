@@ -29,6 +29,6 @@ jobs:
           ref: ${{ steps.determine-branch.outputs.branch }}
 
       - name: Update Poetry packages
-        uses: dishapatel010/action-poetry-package-update@V2.0.1
+        uses: dishapatel010/action-poetry-package-update@V2.0.2
         with:
           base-branch: ${{ steps.determine-branch.outputs.branch }}
