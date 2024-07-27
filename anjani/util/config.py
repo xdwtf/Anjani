@@ -25,6 +25,12 @@ class Config:
     PLUGIN_FLAG: list[str]
     FEATURE_FLAG: list[str]
 
+    HEALTH_CHECK_INTERVAL: Optional[int]
+    HEALTH_CHECK_WEBHOOK_URL: Optional[str]
+
+    SPAM_PREDICTION_URL: Optional[str]
+    SPAM_PREDICTION_API: Optional[str]
+
     IS_CI: bool
 
     def __init__(self) -> None:
@@ -46,16 +52,18 @@ class Config:
         self.SW_API = getenv("SW_API")
 
         self.LOGIN_URL = getenv("LOGIN_URL")
-        self.RAPIDAPI_KEY = getenv("RAPIDAPI_KEY")
-        self.LASTFM_API_KEY = getenv("LASTFM_API_KEY")
-        self.CLIENT_ID = getenv("CLIENT_ID")
-        self.CLIENT_SECRET = getenv("CLIENT_SECRET")
         self.PLUGIN_FLAG = list(
             filter(None, [i.strip() for i in getenv("PLUGIN_FLAG", "").split(";")])
         )
         self.FEATURE_FLAG = list(
             filter(None, [i.strip() for i in getenv("FEATURE_FLAG", "").split(";")])
         )
+
+        self.HEALTH_CHECK_INTERVAL = int(getenv("HEALTH_CHECK_INTERVAL", 60))
+        self.HEALTH_CHECK_WEBHOOK_URL = getenv("HEALTH_CHECK_WEBHOOK_URL")
+
+        self.SPAM_PREDICTION_URL = getenv("SPAM_PREDICTION_URL")
+        self.SPAM_PREDICTION_API = getenv("SPAM_PREDICTION_API")
 
         self.IS_CI = getenv("IS_CI", "false").lower() == "true"
 
