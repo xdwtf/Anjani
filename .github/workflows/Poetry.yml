@@ -1,28 +1,34 @@
 name: Update Python Poetry packages
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      branch-name:
+        description: 'Branch name to update packages on'
+        required: false
+        default: ''
 
 jobs:
   update-packages:
     runs-on: ubuntu-latest
     steps:
-      - name: Set default branch if not provided
-        id: set-branch
+      - name: Determine branch name
+        id: determine-branch
         run: |
-          if [ -z "${{ github.event.inputs.branch-name }}" ]; then
-            echo "Using default branch: HEAD"
-            echo "::set-output name=branch::HEAD"
+          if [ -z "${{ github.event.inputs['branch-name'] }}" ]; then
+            echo "No branch name provided, using the default branch."
+            echo "::set-output name=branch::${{ github.ref_name }}"
           else
-            echo "Using provided branch: ${{ github.event.inputs.branch-name }}"
-            echo "::set-output name=branch::${{ github.event.inputs.branch-name }}"
+            echo "Using provided branch: ${{ github.event.inputs['branch-name'] }}"
+            echo "::set-output name=branch::${{ github.event.inputs['branch-name'] }}"
           fi
 
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          ref: ${{ steps.set-branch.outputs.branch }}
+          ref: ${{ steps.determine-branch.outputs.branch }}
 
       - name: Update Poetry packages
         uses: dishapatel010/action-poetry-package-update@V2.0.1
         with:
-          base-branch: ${{ steps.set-branch.outputs.branch }}  # Use the branch name set in the previous step
+          base-branch: ${{ steps.determine-branch.outputs.branch }}
