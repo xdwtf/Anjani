@@ -15,6 +15,8 @@ help-pm: |
   × /help: PM's you this message.
   × /setlang: Change your language preference.
   × /donate: Get information on how to support me.
+  × /privacy: Bot privacy policy.
+privacy: You can find our privacy policy below.
 start-chat: Sending you a warm hi & wishing your day is a happy one!
 help-chat: Contact me in PM to get the list of possible commands.
 add-to-group-button: Add to Group 👥
