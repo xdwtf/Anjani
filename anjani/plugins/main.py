@@ -333,6 +333,43 @@ class Main(plugin.Plugin):
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
+    async def cmd_privacy(self, ctx: command.Context) -> None:
+        """Bot privacy command"""
+        privacy_text = (
+        "Privacy Policy\n"
+        "Effective Date: July 27, 2024\n\n"
+        "Nexiuo ('we') operates the @Eyamikabot Telegram bot ('Service'). This policy outlines how we collect, use, "
+        "and protect your personal data when you use our Service.\n\n"
+        "Data Collection:\n"
+        "We collect the following information to provide and improve the Service:\n"
+        "- Telegram UserID, First Name, Last Name, Username, Profile Picture\n"
+        "- Chat membership details\n"
+        "- User settings and configurations\n"
+        "- Last usage time\n\n"
+        "Data Usage:\n"
+        "We use the collected data to:\n"
+        "- Provide and improve the Service\n"
+        "- Notify you of changes\n"
+        "- Enable interactive features\n"
+        "- Analyze and enhance the Service\n"
+        "- Monitor usage\n"
+        "- Detect and address issues\n\n"
+        "Data Protection:\n"
+        "We do not sell your data. Access is restricted to authorized personnel. While we strive to protect your data, "
+        "no system is completely secure. Data transfer may occur if we are acquired or cease operations.\n\n"
+        "Children’s Privacy:\n"
+        "Our Service is not for children under 13. We do not knowingly collect data from children under 13. Contact us if "
+        "you believe we have collected such data, and we will remove it.\n\n"
+        "Policy Changes:\n"
+        "We may update this policy and will notify you via our support group. Check this page periodically for updates.\n\n"
+        "Contact:\n"
+        "For questions, contact us on Support Chat."
+        )
+
+        await ctx.respond(
+            privacy_text,
+        )
+
     async def cmd_donate(self, ctx: command.Context) -> None:
         """Bot donate command"""
         await ctx.respond(
