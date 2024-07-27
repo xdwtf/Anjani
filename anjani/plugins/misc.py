@@ -1,5 +1,5 @@
 """miscellaneous bot commands"""
-# Copyright (C) 2020 - 2023  UserbotIndo Team, <https://github.com/userbotindo.git>
+# Copyright (C) 2020 - 2024  UserbotIndo Team, <https://github.com/userbotindo.git>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,38 @@ from typing import Any, ClassVar, Optional
 
 from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
+import aiohttp
 
-from anjani import command, filters, plugin
+from anjani import command, filters, listener, plugin
+from pyrogram.types import Message
+from pyrogram.enums.parse_mode import ParseMode
 
+import re, json, random, requests, os, io, filetype, httpx
+from bs4 import BeautifulSoup
+
+custom_patterns = {
+    "youtube": r"^(https?:\/\/)?((www\.)?youtube\.com|music\.youtube\.com|youtu\.?be)\/.+",
+    "spotify": r"^(https?:\/\/)?(www\.)?(open\.spotify\.com)\/.+",
+    "soundcloud": r"^(https?:\/\/)?((www\.)?soundcloud\.com)\/.+",
+    "deezer": r"^(https?:\/\/)?((www\.)?deezer\.com)\/.+",
+    "apple": r"^(https?:\/\/)?((www\.)?music\.apple\.com)\/.+",
+    "tidal": r"^(https?:\/\/)?((www\.)?tidal\.com)\/.+",
+    "amazon": r"^(https?:\/\/)?((www\.)?music\.amazon\.com)\/.+",
+    "audioMack": r"^(https?:\/\/)?((www\.)?audiomack\.com)\/.+",
+    "qobuz": r"^(https?:\/\/)?((www\.)?qobuz\.com)\/.+",
+    "napster": r"^(https?:\/\/)?((www\.)?us\.napster\.com)\/.+",
+    "pandora": r"^(https?:\/\/)?((www\.)?pandora\.com)\/.+",
+    "itunes": r"^(https?:\/\/)?((www\.)?itunes\.apple\.com)\/.+",
+    "lineMusic": r"^(https?:\/\/)?((www\.)?music\.line\.me)\/.+",
+    "amazonMusic": r"^(https?:\/\/)?((www\.)?music\.amazon\.co\.jp)\/.+",
+    "itunesStore": r"^(https?:\/\/)?((www\.)?itunes\.apple\.com)\/.+",
+    "youtubeMusic": r"^(https?:\/\/)?((www\.)?music\.youtube\.com)\/.+",
+    "googlePlayMusic": r"^(https?:\/\/)?((www\.)?play\.google\.com)\/.+",
+    "bandcamp": r"^(https?:\/\/)?((www\.)?bandcamp\.com)\/.+",
+    "discogs": r"^(https?:\/\/)?((www\.)?discogs\.com)\/.+",
+    "ticketmaster": r"^(https?:\/\/)?((www\.)?ticketmaster\.com)\/.+",
+    "musicbrainz": r"^(https?:\/\/)?((www\.)?musicbrainz\.org)\/.+",
+}
 
 class Paste:
     def __init__(self, session: ClientSession, name: str, url: str):
@@ -85,6 +114,132 @@ class Misc(plugin.Plugin):
 
         return out_str
 
+    @listener.priority(95)
+    @listener.filters(~filters.outgoing)
+    async def on_message(self, message: Message) -> None:
+        if message.text is not None and isinstance(message.text, str):
+            text = message.text
+        elif message.caption is not None and isinstance(message.caption, str):
+            text = message.caption
+        else:
+            return
+
+        if re.match(r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/", text):
+            # Instagram Reel
+            await self.handle_instagram_reel(message)
+        else:
+            url = await self.extract_custom_url(text)
+            if url:
+                await self.handle_music_links(message, url)
+
+    async def extract_custom_url(self, text: str) -> Optional[str]:
+        """Extract the first URL that matches custom patterns."""
+        # Check if text contains multiple lines
+        if '\n' in text:
+            # Split text into lines
+            lines = text.split('\n')
+        else:
+            # Put single-line text into a list
+            lines = [text]
+
+        # Iterate over each line
+        for line in lines:
+            # Iterate over each pattern
+            for pattern in custom_patterns.values():
+                match = re.search(pattern, line)
+                if match:
+                    return match.group(0)  
+        return None
+
+    async def handle_instagram_reel(self, message: Message) -> None:
+        """Handle Instagram Reel"""
+        chat = message.chat
+        ie = message.reply_to_message or message
+        Pattern = r"https?://(?:www\.)instagram\.com/(?:reel)/[a-zA-Z0-9-_]{11}/"
+        xd = re.findall(Pattern, message.text)
+        url = "https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index"
+        querystring = {"url": xd[0]}
+        headers = {
+            "X-RapidAPI-Key": self.bot.config.RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com",
+        }
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        reel= json.loads(response.text)
+        self.log.info(f"Received message: {xd[0]}")
+        try:
+            await self.bot.client.send_video(
+            chat.id,
+            reel["media"],
+            reply_to_message_id=ie.id,
+        )
+        except Exception as e:
+            return None
+
+    async def handle_music_links(self, message: Message, url: str) -> None:
+        """Listen Music Links"""
+        chat = message.chat
+        userx = message.from_user
+        ie = message.reply_to_message or message
+        api_url = "https://api.songwhip.com/v3/create"
+        odesli_url = f'https://api.song.link/v1-alpha.1/links?url={url}'
+        platforms = set()  # Define the platforms set here
+        songwhip_url = None
+        odesli_page_url = None
+    
+
+        try:
+            headers = {'Content-Type': 'application/json'}
+            payload = {'url': url, 'country': 'US'}
+            data = None
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(api_url, json=payload, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        songwhip_url = data.get("data", {}).get("item", {}).get("url", None)
+                        links_data = data.get("data", {}).get("item", {}).get("links", {})
+                        for platform, platform_data in links_data.items():
+                            for link_info in platform_data:
+                                platform_url = link_info['link']
+                                platforms.add((platform, platform_url))  # Add the platform and its URL to the set
+
+            odesli_response = requests.get(odesli_url)
+            if odesli_response.ok:
+                odesli_data = odesli_response.json()
+                odesli_page_url = odesli_data.get("pageUrl", None)
+                entities = odesli_data.get("entitiesByUniqueId", {})
+                song_entity = next(iter(entities.values()))
+                artist_name = song_entity.get("artistName")
+                title = song_entity.get("title")
+                links_by_platform = odesli_data.get("linksByPlatform", {})
+                for platform, platform_data in links_by_platform.items():
+                    platform_url = platform_data.get("url")
+                    platforms.add((platform, platform_url))  # Add the platform and its URL to the set
+
+                sorted_platforms = sorted(platforms)
+                platform_str = " | ".join(f"[{platform.title()}]({platform_url})" for platform, platform_url in sorted_platforms)
+                message = ""
+                message += f'**{title}** by **{artist_name}** from: **{userx.mention}**\n\n'
+                message += platform_str
+                if odesli_page_url is not None:
+                    message += f' | [Odesli]({odesli_page_url})'
+                if songwhip_url is not None:
+                    message += f' | [Songwhip](https://songwhip.com{songwhip_url})'
+                await self.bot.client.send_message(
+                    chat.id,
+                    text=message,
+                    reply_to_message_id=ie.id,
+                    parse_mode=ParseMode.MARKDOWN,
+                    disable_web_page_preview=True,
+                )
+            else:
+                self.log.info(f"music else part")
+                return None
+        except Exception as e:
+            self.log.error(e, exc_info=e)
+            return None
+
+    @command.filters(filters.private)
     async def cmd_paste(self, ctx: command.Context, service: Optional[str] = None) -> Optional[str]:
         if not ctx.msg.reply_to_message:
             return None
@@ -96,7 +251,7 @@ class Misc(plugin.Plugin):
         reply_msg = ctx.msg.reply_to_message
 
         data: Any
-        if reply_msg.document:
+        if (reply_msg.document and reply_msg.document.file_size < 10000000):
             file = AsyncPath(await reply_msg.download())
             data = await file.read_text()
             await file.unlink()
@@ -149,6 +304,20 @@ class Misc(plugin.Plugin):
             disable_web_page_preview=True,
         )
 
+    @command.filters(filters.admin_only)
+    async def cmd_echo(self, ctx: command.Context) -> str:
+        """Panda to Echo."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_message(
+            chat.id,
+            text,
+            reply_to_message_id=msg.id,
+        )
+        await ctx.msg.delete()
+        return None
+
     @command.filters(filters.group)
     async def cmd_slap(self, ctx: command.Context) -> Optional[str]:
         """Slap member with neko slap."""
@@ -167,3 +336,42 @@ class Misc(plugin.Plugin):
             caption=text,
         )
         return None
+
+    @command.filters(filters.group)
+    async def cmd_pat(self, ctx: command.Context) -> Optional[str]:
+        """Pat member with neko pat."""
+        text = ctx.input
+        chat = ctx.msg.chat
+        async with self.bot.http.get("https://www.nekos.life/api/v2/img/pat") as pat:
+            if pat.status != 200:
+                return await self.text(chat.id, "err-api-down")
+            res = await pat.json()
+
+        msg = ctx.msg.reply_to_message or ctx.msg
+        await self.bot.client.send_animation(
+            chat.id,
+            res["url"],
+            reply_to_message_id=msg.id,
+            caption=text,
+        )
+        return None
+
+    async def cmd_ud(self, ctx: command.Context) -> Optional[str]:
+        """urban dictionary"""
+        tex = ctx.input.split()[-1]
+        chat = ctx.msg.chat
+        ud = f'http://api.urbandictionary.com/v0/define?term={tex}'
+        res = requests.get(ud)
+        ret = json.loads(res.text)
+        try:
+            word = ret["list"][0]["word"]
+            definition = ret["list"][0]["definition"]
+            example = ret["list"][0]["example"]
+            y = f"Text: {word}\n\nMeaning: {definition}\n\nExample: {example}"
+            await self.bot.client.send_message(
+            chat.id,
+            text=y,
+            reply_to_message_id=ctx.msg.id,
+        )
+        except Exception as e:
+            return None

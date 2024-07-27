@@ -1,0 +1,34 @@
+name: Update Python Poetry packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch-name:
+        description: 'Branch name to update packages on'
+        required: false
+        default: ''
+
+jobs:
+  update-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine branch name
+        id: determine-branch
+        run: |
+          if [ -z "${{ github.event.inputs['branch-name'] }}" ]; then
+            echo "No branch name provided, using the default branch."
+            echo "::set-output name=branch::${{ github.ref_name }}"
+          else
+            echo "Using provided branch: ${{ github.event.inputs['branch-name'] }}"
+            echo "::set-output name=branch::${{ github.event.inputs['branch-name'] }}"
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.determine-branch.outputs.branch }}
+
+      - name: Update Poetry packages
+        uses: dishapatel010/action-poetry-package-update@v2.0.3
+        with:
+          base-branch: ${{ steps.determine-branch.outputs.branch }}
