@@ -6,6 +6,23 @@ jobs:
   update-packages:
     runs-on: ubuntu-latest
     steps:
-      - uses: dishapatel010/action-poetry-package-update@V2.0.1
+      - name: Set default branch if not provided
+        id: set-branch
+        run: |
+          if [ -z "${{ github.event.inputs.branch-name }}" ]; then
+            echo "Using default branch: HEAD"
+            echo "::set-output name=branch::HEAD"
+          else
+            echo "Using provided branch: ${{ github.event.inputs.branch-name }}"
+            echo "::set-output name=branch::${{ github.event.inputs.branch-name }}"
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v2
         with:
-          base-branch: X20092023-sp  # Can also be `master`, for exampl
+          ref: ${{ steps.set-branch.outputs.branch }}
+
+      - name: Update Poetry packages
+        uses: dishapatel010/action-poetry-package-update@V2.0.1
+        with:
+          base-branch: ${{ steps.set-branch.outputs.branch }}  # Use the branch name set in the previous step
