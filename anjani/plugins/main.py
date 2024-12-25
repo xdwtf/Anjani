@@ -222,6 +222,11 @@ class Main(plugin.Plugin):
                 )
                 return None
 
+            if ctx.input == "lastfm":
+                mt = f"Set your Last.fm username using the following command:\n`/setusername your_lastfm_username`\n\nExample:\n`/setusername IsThisUser`\n\nAfter setting your username, revisit Mini App: t.me/eyamikabot/lastfm\n\n/status : your scrobbling Last.fm\n/flex : Flex Last.fm"
+                await ctx.respond(mt, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+                return None
+
             if ctx.input == "music":
                 mt = f"now - Display current Spotify track.\nUsage: `/now`.\n\ntoptracks - Show top 5 tracks by time range.\nUsage: `/toptracks [s|m|l]`. use 's' for short, 'm' for medium, or 'l' for long.\nExample: `/toptracks m`"
                 await ctx.respond(mt, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
