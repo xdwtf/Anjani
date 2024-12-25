@@ -9,7 +9,7 @@ from aiohttp import ClientConnectorError, ClientSession, ContentTypeError
 from aiopath import AsyncPath
 
 from anjani import command, filters, listener, plugin, util
-from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo
+from pyrogram.types import Message, InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums.parse_mode import ParseMode
 from pyrogram.enums.chat_action import ChatAction
 
@@ -316,11 +316,15 @@ class LastfmPlugin(plugin.Plugin):
         registered_unixtime = int(data['user']['registered']['unixtime'])
         dt = datetime.datetime.fromtimestamp(registered_unixtime)
         message = f"[{ctx.msg.from_user.first_name}](tg://user?id={ctx.msg.from_user.id})\n\nListens: {playcount}\nArtists: {artistcount}\nTracks: {trackcount}\nAlbums: {albumcount}\n\nSince: {dt}"
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("LastFM Mini App", url="https://t.me/eyamikabot/lastfm")]]
+        )
+
         if 'image' in data['user'] and data['user']['image']:
             user_image = data['user']['image'][-1]['#text']
-            await ctx.respond(message, photo=user_image, parse_mode=ParseMode.MARKDOWN)
+            await ctx.respond(message, photo=user_image, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
         else:
-            await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+            await ctx.respond(message, reply_markup=keyboard, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
     
     @command.filters(filters.private | filters.group, aliases=["s"])
     async def cmd_status(self, ctx: command.Context) -> None:
@@ -382,6 +386,10 @@ class LastfmPlugin(plugin.Plugin):
             message += f"\n🔖 Tags: {formatted_tags}"
         message += f"\n\n📈 Total Listens: {total_listens}"
 
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("LastFM Mini App", url="https://t.me/eyamikabot/lastfm")]]
+        )
+
         # Adding the track image URL to the message if available
         if track_image_url:
             user = await self.bot.client.get_users(ctx.msg.from_user.id)
@@ -392,9 +400,9 @@ class LastfmPlugin(plugin.Plugin):
                 upfp = '/app/anjani/custom_plugins/pfp.jpg'
             # Generate a custom image using create_custom_image
             custom_image = create_custom_image(track_picture_url=track_image_url, upfp=upfp, track_name=title, artist_name=artist)
-            await ctx.respond(message, photo=custom_image, parse_mode=ParseMode.MARKDOWN)
+            await ctx.respond(message, photo=custom_image, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
         else:
-            await ctx.respond(message, disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN)
+            await ctx.respond(message, disable_web_page_preview=True, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
 
     @command.filters(filters.private | filters.group)
     async def cmd_weekly(self, ctx: command.Context) -> None:
