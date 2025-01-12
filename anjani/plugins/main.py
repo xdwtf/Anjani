@@ -241,7 +241,7 @@ class Main(plugin.Plugin):
 
             if ctx.input and ctx.input.startswith("ani_"):
                 unique_uuid = ctx.input[4:]
-                data = await self.get_data("unique_uuid", unique_uuid)
+                data = await self.get_data("uuid", unique_uuid)
                 if data:
                     await self.set_data(ctx.msg.from_user.id, data['anilist_token'], data['expires_at'])
                     await ctx.respond("Your AniList account has been successfully linked.", parse_mode=ParseMode.MARKDOWN)
