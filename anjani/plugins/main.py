@@ -59,7 +59,7 @@ class Main(plugin.Plugin):
     async def get_data(self, key: str, value: Any) -> Optional[MutableMapping[str, Any]]:
         return await self.ani.find_one({key: value})
 
-     async def set_data(self, user_id: int, access_token: str, expires_at: str) -> None:
+    async def set_data(self, user_id: int, access_token: str, expires_at: str) -> None:
         await self.ani.update_one({"user_id": user_id}, {"$set": {"access_token": access_token, "expires_at": expires_at}}, upsert=True)
 
     async def on_start(self, _: int) -> None:
