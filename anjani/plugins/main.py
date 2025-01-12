@@ -59,8 +59,9 @@ class Main(plugin.Plugin):
     async def get_data(self, key: str, value: Any) -> Optional[MutableMapping[str, Any]]:
         return await self.ani.find_one({key: value})
 
-    async def set_data(self, user_id: int, access_token: str, expires_at: str) -> None:
+    async def set_data(self, unique_uuid: str, user_id: int, access_token: str, expires_at: str) -> None:
         await self.ani.update_one({"user_id": user_id}, {"$set": {"access_token": access_token, "expires_at": expires_at}}, upsert=True)
+        await self.ani.delete_one({"uuid": unique_uuid})
 
     async def on_start(self, _: int) -> None:
         self.bot_name = (
@@ -243,7 +244,7 @@ class Main(plugin.Plugin):
                 unique_uuid = ctx.input[4:]
                 data = await self.get_data("uuid", unique_uuid)
                 if data:
-                    await self.set_data(ctx.msg.from_user.id, data['anilist_token'], data['expires_at'])
+                    await self.set_data(unique_uuid, ctx.msg.from_user.id, data['anilist_token'], data['expires_at'])
                     await ctx.respond("Your AniList account has been successfully linked.", parse_mode=ParseMode.MARKDOWN)
                 else:
                     await ctx.respond("Error: AniList token not found. Please try again.", parse_mode=ParseMode.MARKDOWN)
