@@ -18,7 +18,7 @@
 import asyncio
 import re
 from hashlib import sha256
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Any, MutableMapping
 
 from aiopath import AsyncPath
 from bson.binary import Binary
