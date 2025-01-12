@@ -601,3 +601,10 @@ class Anime(plugin.Plugin):
                 parse_mode=ParseMode.HTML,
             )
             await cover.unlink()
+
+    @command.filters(filters.private)
+    async def cmd_authani(self, ctx: command.Context) -> None:
+        """Anilist Auth"""
+        auth_url = "https://anilist.co/api/v2/oauth/authorize?client_id=23651&redirect_uri=https://eyamika.vercel.app/anilist_callback&response_type=code"
+        await ctx.respond(f"To link your Anilist account, click [Authorize]({auth_url}).", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+
